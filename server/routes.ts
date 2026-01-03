@@ -143,24 +143,24 @@ async function seedDatabase() {
   if (existingAds.length === 0) {
     console.log("Seeding database...");
     
-    // Create Shopee Ad
-    const shopeeAd = await storage.createAd({
+    // Create Instagram Ad 1
+    const instaAd1 = await storage.createAd({
       userId: admin.id,
-      name: 'Promoção Fones Bluetooth',
-      platformIdentifier: 'SHOPEE_123456',
-      platform: 'shopee',
-      status: 'active'
-    });
-    await generateMockHistory(shopeeAd.id);
-
-    // Create Instagram Ad
-    const instaAd = await storage.createAd({
-      userId: admin.id,
-      name: 'Instagram Story - Moda Verão',
+      name: 'Instagram Story - Coleção Verão',
       platformIdentifier: 'IG_987654',
       platform: 'instagram',
       status: 'active'
     });
-    await generateMockHistory(instaAd.id);
+    await generateMockHistory(instaAd1.id);
+
+    // Create Instagram Ad 2
+    const instaAd2 = await storage.createAd({
+      userId: admin.id,
+      name: 'Feed Post - Ofertas da Semana',
+      platformIdentifier: 'IG_123456',
+      platform: 'instagram',
+      status: 'active'
+    });
+    await generateMockHistory(instaAd2.id);
   }
 }

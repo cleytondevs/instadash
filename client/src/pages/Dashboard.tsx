@@ -91,15 +91,15 @@ export default function Dashboard() {
               <BarChart3 className="text-white w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-bold text-foreground leading-none">ShopeeAds<span className="text-primary">Manager</span></h1>
-              <p className="text-xs text-muted-foreground mt-1">Campaign Intelligence Dashboard</p>
+              <h1 className="text-xl font-display font-bold text-foreground leading-none">Insta<span className="text-primary">Manager</span></h1>
+              <p className="text-xs text-muted-foreground mt-1">Dashboard de Inteligência de Campanhas</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center text-sm font-medium text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-lg border border-border/50">
               <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-              System Operational
+              Sistema Operacional
             </div>
             <div className="h-8 w-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-primary font-bold">
               JD
@@ -113,8 +113,8 @@ export default function Dashboard() {
         {/* Actions Row */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-display font-bold text-foreground">Overview</h2>
-            <p className="text-muted-foreground">Track your performance metrics for the last 30 days.</p>
+            <h2 className="text-2xl font-display font-bold text-foreground">Visão Geral</h2>
+            <p className="text-muted-foreground">Acompanhe suas métricas de desempenho dos últimos 30 dias.</p>
           </div>
           <CreateAdDialog />
         </div>
@@ -122,23 +122,23 @@ export default function Dashboard() {
         {/* KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <KPICard 
-            title="Total Revenue" 
+            title="Receita Total" 
             value={formatCurrency(stats.revenue)}
             icon={<DollarSign className="w-5 h-5" />}
             trend={12.5}
-            trendLabel="vs last 30 days"
+            trendLabel="vs últimos 30 dias"
             className="bg-gradient-to-br from-white to-orange-50/30"
           />
           <KPICard 
-            title="Total Spend" 
+            title="Investimento Total" 
             value={formatCurrency(stats.spend)}
             icon={<Activity className="w-5 h-5" />}
             trend={-2.4}
-            trendLabel="vs last 30 days"
-            isPositive={false} // spending less is good usually, but trend calculation depends on perspective. Here strictly mathematical.
+            trendLabel="vs últimos 30 dias"
+            isPositive={false} 
           />
           <KPICard 
-            title="Return on Ad Spend" 
+            title="Retorno sobre Investimento" 
             value={`${(stats.revenue / stats.spend).toFixed(2)}x`}
             icon={<TrendingUp className="w-5 h-5" />}
             trend={8.2}
@@ -146,10 +146,10 @@ export default function Dashboard() {
             className="border-primary/20 bg-primary/5"
           />
           <KPICard 
-            title="Total Impressions" 
+            title="Impressões Totais" 
             value={stats.impressions.toLocaleString()}
             icon={<BarChart3 className="w-5 h-5" />}
-            subValue="Avg. CTR: 2.4%"
+            subValue="CTR Médio: 2.4%"
           />
         </div>
 
@@ -158,12 +158,12 @@ export default function Dashboard() {
           <div className="lg:col-span-2 glass-card p-6 rounded-2xl">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-semibold">Revenue vs Spend</h3>
-                <p className="text-sm text-muted-foreground">Daily performance analysis</p>
+                <h3 className="text-lg font-semibold">Receita vs Investimento</h3>
+                <p className="text-sm text-muted-foreground">Análise de desempenho diário</p>
               </div>
               <div className="flex items-center space-x-2 text-sm">
-                <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-primary mr-2"></span> Revenue</div>
-                <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-slate-300 mr-2"></span> Spend</div>
+                <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-primary mr-2"></span> Receita</div>
+                <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-slate-300 mr-2"></span> Investimento</div>
               </div>
             </div>
             <div className="h-[300px] w-full">
@@ -219,15 +219,15 @@ export default function Dashboard() {
           </div>
 
           <div className="glass-card p-6 rounded-2xl flex flex-col justify-center">
-             <h3 className="text-lg font-semibold mb-2">Platform Split</h3>
-             <p className="text-sm text-muted-foreground mb-8">Revenue distribution by channel</p>
+             <h3 className="text-lg font-semibold mb-2">Divisão por Plataforma</h3>
+             <p className="text-sm text-muted-foreground mb-8">Distribuição de receita por canal</p>
              
              <div className="flex justify-center mb-8 relative">
                 {/* Donut Chart Simulation */}
-                <div className="w-48 h-48 rounded-full border-[16px] border-slate-100 border-t-primary border-r-primary transform -rotate-45 relative">
+                <div className="w-48 h-48 rounded-full border-[16px] border-slate-100 border-t-primary transform -rotate-45 relative">
                   <div className="absolute inset-0 flex flex-col items-center justify-center transform rotate-45">
-                    <span className="text-3xl font-bold">75%</span>
-                    <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Shopee</span>
+                    <span className="text-3xl font-bold">100%</span>
+                    <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Instagram</span>
                   </div>
                 </div>
              </div>
@@ -236,16 +236,9 @@ export default function Dashboard() {
                <div className="flex justify-between items-center p-3 bg-secondary/30 rounded-xl">
                  <div className="flex items-center">
                    <div className="w-3 h-3 rounded-full bg-primary mr-3"></div>
-                   <span className="font-medium text-sm">Shopee</span>
-                 </div>
-                 <span className="font-bold">R$ 2.8M</span>
-               </div>
-               <div className="flex justify-between items-center p-3 bg-secondary/30 rounded-xl">
-                 <div className="flex items-center">
-                   <div className="w-3 h-3 rounded-full bg-slate-300 mr-3"></div>
                    <span className="font-medium text-sm">Instagram</span>
                  </div>
-                 <span className="font-bold">R$ 950k</span>
+                 <span className="font-bold">R$ 3.8M</span>
                </div>
              </div>
           </div>
@@ -254,12 +247,12 @@ export default function Dashboard() {
         {/* Campaign List */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4">
-            <h3 className="text-xl font-bold font-display">Active Campaigns</h3>
+            <h3 className="text-xl font-bold font-display">Campanhas Ativas</h3>
             <div className="flex w-full sm:w-auto space-x-2">
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search campaigns..." 
+                  placeholder="Buscar campanhas..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 rounded-xl border-border bg-white"
@@ -277,9 +270,9 @@ export default function Dashboard() {
                 <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                   <Search className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-medium text-foreground">No campaigns found</h3>
+                <h3 className="text-lg font-medium text-foreground">Nenhuma campanha encontrada</h3>
                 <p className="text-muted-foreground max-w-sm mx-auto mt-1">
-                  Try adjusting your search terms or create a new campaign to get started.
+                  Tente ajustar seus termos de busca ou crie uma nova campanha para começar.
                 </p>
               </div>
             ) : (
@@ -297,7 +290,7 @@ export default function Dashboard() {
                             {ad.platformIdentifier}
                           </Badge>
                           <Badge className={ad.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-gray-100 text-gray-600'}>
-                            {ad.status}
+                            {ad.status === 'active' ? 'ativo' : 'pausado'}
                           </Badge>
                           <span className="text-xs text-muted-foreground capitalize">• {ad.platform}</span>
                         </div>
@@ -306,11 +299,11 @@ export default function Dashboard() {
 
                     <div className="flex items-center w-full md:w-auto justify-between md:justify-end gap-8 pl-16 md:pl-0">
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Spend</p>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Investimento</p>
                         <p className="font-bold text-foreground">R$ 1.250,00</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Revenue</p>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Receita</p>
                         <p className="font-bold text-green-600">R$ 3.840,00</p>
                       </div>
                       <div className="hidden sm:block">

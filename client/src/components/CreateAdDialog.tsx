@@ -47,7 +47,7 @@ export function CreateAdDialog() {
     defaultValues: {
       name: "",
       platformIdentifier: "",
-      platform: "shopee",
+      platform: "instagram",
       status: "active",
     },
   });
@@ -66,14 +66,14 @@ export function CreateAdDialog() {
       <DialogTrigger asChild>
         <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
           <Plus className="w-4 h-4 mr-2" />
-          New Campaign
+          Nova Campanha
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 border-none shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-foreground">Track New Ad</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground">Acompanhar Novo Anúncio</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Connect an existing Shopee ad campaign to start tracking ROI automatically.
+            Conecte uma campanha do Instagram para começar a rastrear o ROI automaticamente.
           </DialogDescription>
         </DialogHeader>
 
@@ -84,10 +84,10 @@ export function CreateAdDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground font-medium">Campaign Name</FormLabel>
+                  <FormLabel className="text-foreground font-medium">Nome da Campanha</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g. Summer Sale 2024" 
+                      placeholder="Ex: Promoção de Verão 2024" 
                       className="rounded-xl border-border focus:ring-primary/20 focus:border-primary"
                       {...field} 
                     />
@@ -102,10 +102,10 @@ export function CreateAdDialog() {
               name="platformIdentifier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground font-medium">Boost ID</FormLabel>
+                  <FormLabel className="text-foreground font-medium">ID do Impulsionamento</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Shopee/IG Ad ID" 
+                      placeholder="ID do Anúncio no Instagram" 
                       className="rounded-xl border-border focus:ring-primary/20 focus:border-primary"
                       {...field} 
                     />
@@ -120,15 +120,14 @@ export function CreateAdDialog() {
               name="platform"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground font-medium">Platform</FormLabel>
+                  <FormLabel className="text-foreground font-medium">Plataforma</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="rounded-xl border-border focus:ring-primary/20 focus:border-primary">
-                        <SelectValue placeholder="Select platform" />
+                        <SelectValue placeholder="Selecione a plataforma" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="shopee">Shopee</SelectItem>
                       <SelectItem value="instagram">Instagram</SelectItem>
                     </SelectContent>
                   </Select>
@@ -145,10 +144,10 @@ export function CreateAdDialog() {
               {createAd.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
+                  Criando...
                 </>
               ) : (
-                "Create Campaign"
+                "Criar Campanha"
               )}
             </Button>
           </form>
