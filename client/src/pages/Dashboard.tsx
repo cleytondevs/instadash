@@ -92,7 +92,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <Button 
-                onClick={() => window.alert('Integração com Login do Facebook iniciada...')}
+                onClick={() => window.alert('Para conectar sua conta real, é necessário configurar um Aplicativo na Meta for Developers e obter um Token de Acesso. Por enquanto, esta funcionalidade é apenas visual.')}
                 className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 h-12 rounded-xl shrink-0"
               >
                 Conectar Instagram
