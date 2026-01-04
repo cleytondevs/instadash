@@ -3,12 +3,11 @@ import { useParams, Link, useLocation } from "wouter";
 import { 
   ArrowLeft, 
   RefreshCw, 
-  Calendar, 
   Trash2, 
-  ExternalLink,
   TrendingUp,
   Target,
-  MousePointer2
+  MousePointer2,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";

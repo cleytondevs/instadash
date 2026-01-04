@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Dashboard() {
   const { data: ads, isLoading } = useAds();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   const stats = useMemo(() => {
     if (!ads || ads.length === 0) return { spend: 0, revenue: 0, profit: 0, roi: 0 };
@@ -79,6 +80,33 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-12 space-y-12">
+        
+        {showOnboarding && (
+          <div className="bg-blue-600 rounded-2xl p-8 text-white relative overflow-hidden shadow-lg">
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Conecte seus anúncios reais</h2>
+                <p className="text-blue-100 max-w-md">
+                  Pare de usar dados simulados. Conecte sua conta do Facebook para importar automaticamente seus anúncios impulsionados do Instagram.
+                </p>
+              </div>
+              <Button 
+                onClick={() => window.alert('Integração com Login do Facebook iniciada...')}
+                className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 h-12 rounded-xl shrink-0"
+              >
+                Conectar Instagram
+              </Button>
+            </div>
+            <button 
+              onClick={() => setShowOnboarding(false)}
+              className="absolute top-4 right-4 text-blue-200 hover:text-white"
+            >
+              <Search className="w-5 h-5 rotate-45" />
+            </button>
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
             {['Hoje', '7 dias', '30 dias', 'Este mês'].map((label) => (
