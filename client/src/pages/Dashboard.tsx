@@ -289,6 +289,24 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      <footer className="max-w-5xl mx-auto px-6 py-8 border-t border-gray-200 mt-12">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+              <BarChart3 className="text-gray-400 w-4 h-4" />
+            </div>
+            <span className="text-sm font-semibold text-gray-500">InstaDash</span>
+          </div>
+          <div className="flex items-center space-x-6 text-sm text-gray-500">
+            <Link href="/terms" className="hover:text-blue-600 transition-colors">Termos de Serviço</Link>
+            <Link href="/privacy" className="hover:text-blue-600 transition-colors">Política de Privacidade</Link>
+          </div>
+          <p className="text-xs text-gray-400">
+            © 2026 InstaDash. Todos os direitos reservados.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
