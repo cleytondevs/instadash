@@ -10,9 +10,10 @@ import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { AdResponse } from "@shared/schema";
 
 export default function Dashboard() {
-  const { data: ads, isLoading } = useAds();
+  const { data: ads, isLoading } = useAds() as { data: AdResponse[] | undefined, isLoading: boolean };
   const [searchTerm, setSearchTerm] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(true);
 
@@ -22,9 +23,9 @@ export default function Dashboard() {
     let totalSpend = 0;
     let totalRevenue = 0;
 
-    ads.forEach(ad => {
+    ads.forEach((ad: AdResponse) => {
       if (ad.reports) {
-        ad.reports.forEach(report => {
+        ad.reports.forEach((report) => {
           totalSpend += report.spend;
           totalRevenue += report.revenue;
         });

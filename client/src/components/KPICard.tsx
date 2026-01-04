@@ -10,10 +10,11 @@ interface KPICardProps {
   trendLabel?: string;
   className?: string;
   subValue?: string;
+  isPositive?: boolean;
 }
 
-export function KPICard({ title, value, icon, trend, trendLabel, className, subValue }: KPICardProps) {
-  const isPositive = trend && trend >= 0;
+export function KPICard({ title, value, icon, trend, trendLabel, className, subValue, isPositive: isPositiveProp }: KPICardProps) {
+  const isPositive = isPositiveProp ?? (trend !== undefined && trend >= 0);
 
   return (
     <div className={cn(

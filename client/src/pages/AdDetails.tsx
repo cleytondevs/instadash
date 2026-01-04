@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   LineChart,
   Line,
@@ -36,17 +37,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import type { AdResponse } from "@shared/schema";
 
 export default function AdDetails() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const adId = Number(id);
-  const { data: ad, isLoading } = useAd(adId);
+  const { data: ad, isLoading } = useAd(adId) as { data: AdResponse | undefined, isLoading: boolean };
   const syncAd = useSyncAd();
   const deleteAd = useDeleteAd();
 
   if (isLoading) return <DetailsSkeleton />;
-  if (!ad) return <div className="p-8 text-center">Anúncio não encontrado</div>;
+  if (!ad) return <div className="p-8 text-center text-gray-500">Anúncio não encontrado</div>;
 
   const handleSync = () => {
     syncAd.mutate(adId);
@@ -60,12 +62,10 @@ export default function AdDetails() {
 
   const reports = ad.reports || [];
   
-  // Sort reports by date
   const sortedReports = [...reports].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // Totals
   const totalSpend = reports.reduce((acc, r) => acc + r.spend, 0);
   const totalRevenue = reports.reduce((acc, r) => acc + r.revenue, 0);
   const totalImpressions = reports.reduce((acc, r) => acc + (r.impressions || 0), 0);
@@ -80,26 +80,24 @@ export default function AdDetails() {
     }).format(cents / 100);
   };
 
+  const isPositive = roi >= 0;
+
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-border/50 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/">
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary">
-                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+                <ArrowLeft className="w-5 h-5 text-gray-500" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold font-display flex items-center gap-2">
+              <h1 className="text-xl font-bold flex items-center gap-2 text-gray-900">
                 {ad.name}
-                <span className={cn(
-                  "px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider",
-                  ad.status === 'active' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-                )}>
+                <Badge variant={ad.status === 'active' ? 'default' : 'secondary'} className={ad.status === 'active' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : ''}>
                   {ad.status === 'active' ? 'Ativo' : 'Pausado'}
-                </span>
+                </Badge>
               </h1>
             </div>
           </div>
@@ -110,7 +108,7 @@ export default function AdDetails() {
               size="sm" 
               onClick={handleSync} 
               disabled={syncAd.isPending}
-              className="border-primary/20 text-primary hover:bg-primary/5 hover:text-primary"
+              className="border-blue-200 text-blue-600 hover:bg-blue-50"
             >
               <RefreshCw className={cn("w-4 h-4 mr-2", syncAd.isPending && "animate-spin")} />
               {syncAd.isPending ? "Sincronizando..." : "Sincronizar Dados"}
@@ -118,11 +116,11 @@ export default function AdDetails() {
             
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50">
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -130,8 +128,8 @@ export default function AdDetails() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                  <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white rounded-xl">
                     Excluir Campanha
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -141,54 +139,52 @@ export default function AdDetails() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Key Stats Row */}
+      <main className="max-w-5xl mx-auto px-6 py-12 space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <KPICard 
             title="Receita Total" 
             value={formatCurrency(totalRevenue)}
             icon={<TrendingUp className="w-5 h-5" />}
-            className="border-l-4 border-l-green-500"
+            className="bg-white border-gray-200"
           />
           <KPICard 
             title="Investimento Total" 
             value={formatCurrency(totalSpend)}
             icon={<Target className="w-5 h-5" />}
-            className="border-l-4 border-l-red-400"
+            className="bg-white border-gray-200"
           />
           <KPICard 
             title="Cliques Totais" 
             value={totalClicks.toLocaleString()}
             subValue={`CTR: ${ctr.toFixed(2)}%`}
             icon={<MousePointer2 className="w-5 h-5" />}
-            className="border-l-4 border-l-blue-400"
+            className="bg-white border-gray-200"
           />
           <KPICard 
             title="ROI" 
             value={`${roi.toFixed(1)}%`}
             icon={<Activity className="w-5 h-5" />}
-            isPositive={roi > 0}
-            trend={roi} // just strictly for color
-            className="bg-primary/5 border-primary/20"
+            isPositive={isPositive}
+            trend={roi}
+            className={isPositive ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : 'bg-red-50 border-red-100 text-red-900'}
           />
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass-card p-6 rounded-2xl">
-             <div className="flex items-center justify-between mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+             <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="text-lg font-semibold">Tendências de Desempenho</h3>
-                  <p className="text-sm text-muted-foreground">Receita Diária vs Investimento</p>
+                  <h3 className="text-lg font-bold text-gray-900">Tendências de Desempenho</h3>
+                  <p className="text-sm text-gray-500">Receita Diária vs Investimento</p>
                 </div>
              </div>
              <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={sortedReports}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                     <XAxis 
                       dataKey="date" 
-                      tickFormatter={(val) => format(new Date(val), 'dd/MM')}
+                      tickFormatter={(val) => format(new Date(val), 'dd/MM', { locale: ptBR })}
                       stroke="#94A3B8"
                       fontSize={12}
                       tickLine={false}
@@ -205,13 +201,13 @@ export default function AdDetails() {
                     <Tooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                       formatter={(value: number) => [`R$ ${value/100}`, '']}
-                      labelFormatter={(label) => format(new Date(label), 'PPP', { locale: (window as any).ptBR })}
+                      labelFormatter={(label) => format(new Date(label), 'PPP', { locale: ptBR })}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="revenue" 
                       name="Receita"
-                      stroke="hsl(var(--primary))" 
+                      stroke="#10B981" 
                       strokeWidth={3}
                       dot={false}
                     />
@@ -229,12 +225,12 @@ export default function AdDetails() {
              </div>
           </div>
 
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="text-lg font-semibold mb-4">Lucro Diário</h3>
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Lucro Diário</h3>
             <div className="h-[350px]">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={sortedReports}>
-                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                    <XAxis dataKey="date" hide />
                    <Tooltip 
                      cursor={{fill: 'transparent'}}
@@ -243,9 +239,9 @@ export default function AdDetails() {
                          const data = payload[0].payload;
                          const profit = data.revenue - data.spend;
                          return (
-                           <div className="bg-white p-3 rounded-lg shadow-lg border border-border">
-                             <p className="font-bold mb-1">{format(new Date(data.date), 'dd MMM')}</p>
-                             <p className={profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                           <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100">
+                             <p className="font-bold text-gray-900 mb-1">{format(new Date(data.date), 'dd MMM', { locale: ptBR })}</p>
+                             <p className={profit >= 0 ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'}>
                                Lucro: {formatCurrency(profit)}
                              </p>
                            </div>
@@ -254,76 +250,70 @@ export default function AdDetails() {
                        return null;
                      }}
                    />
-                   <Bar dataKey={(data) => data.revenue - data.spend} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                   <Bar dataKey={(data) => data.revenue - data.spend} fill="#3B82F6" radius={[4, 4, 0, 0]} />
                  </BarChart>
                </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        {/* Detailed Table */}
-        <div className="glass-card rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-border/50">
-            <h3 className="text-lg font-bold">Detalhamento Diário</h3>
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-gray-200 bg-gray-50/50">
+            <h3 className="text-lg font-bold text-gray-900">Detalhamento Diário</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-secondary/30">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Impressões</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cliques</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">CTR</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Investimento</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Receita</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">ROAS</th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-200">
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Data</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Cliques</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">CTR</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Investimento</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Receita</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">ROAS</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
-                {sortedReports.map((report) => {
-                  const dayProfit = report.revenue - report.spend;
-                  const dayRoas = report.spend > 0 ? report.revenue / report.spend : 0;
-                  const dayCtr = (report.impressions || 0) > 0 ? ((report.clicks || 0) / (report.impressions || 1)) * 100 : 0;
-                  
-                  return (
-                    <tr key={report.id} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                        {format(new Date(report.date), 'dd MMM yyyy')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-muted-foreground">
-                        {report.impressions?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-muted-foreground">
-                        {report.clicks?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-muted-foreground">
-                        {dayCtr.toFixed(2)}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-foreground font-medium">
-                        {formatCurrency(report.spend)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600 font-bold">
-                        {formatCurrency(report.revenue)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <span className={cn(
-                          "px-2 py-1 rounded-md text-xs font-bold",
-                          dayRoas >= 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        )}>
-                          {dayRoas.toFixed(2)}x
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody className="divide-y divide-gray-200">
+                {sortedReports.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                      Nenhum dado diário disponível.
+                    </td>
+                  </tr>
+                ) : (
+                  sortedReports.map((report) => {
+                    const dayRoas = report.spend > 0 ? report.revenue / report.spend : 0;
+                    const dayCtr = (report.impressions || 0) > 0 ? ((report.clicks || 0) / (report.impressions || 1)) * 100 : 0;
+                    
+                    return (
+                      <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {format(new Date(report.date), 'dd MMM yyyy', { locale: ptBR })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
+                          {report.clicks?.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
+                          {dayCtr.toFixed(2)}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-medium">
+                          {formatCurrency(report.spend)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-emerald-600 font-bold">
+                          {formatCurrency(report.revenue)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <Badge variant={dayRoas >= 1 ? 'default' : 'secondary'} className={dayRoas >= 1 ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : ''}>
+                            {dayRoas.toFixed(2)}x
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
-          {sortedReports.length === 0 && (
-            <div className="p-12 text-center text-muted-foreground">
-              Nenhum dado diário disponível. Clique em \"Sincronizar Dados\" para buscar os relatórios mais recentes.
-            </div>
-          )}
         </div>
       </main>
     </div>
@@ -332,12 +322,12 @@ export default function AdDetails() {
 
 function DetailsSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50/50 p-8 space-y-8">
-      <div className="flex justify-between items-center h-16 max-w-7xl mx-auto w-full">
+    <div className="min-h-screen bg-gray-50 p-8 space-y-8">
+      <div className="flex justify-between items-center h-16 max-w-5xl mx-auto w-full">
         <Skeleton className="h-10 w-48 rounded-lg" />
         <Skeleton className="h-10 w-24 rounded-lg" />
       </div>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         <div className="grid grid-cols-4 gap-6">
           {[1,2,3,4].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
         </div>
