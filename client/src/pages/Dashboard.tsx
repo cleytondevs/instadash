@@ -38,7 +38,7 @@ export default function Dashboard() {
 
     window.fbAsyncInit = function() {
       window.FB.init({
-        appId      : 'SEU_APP_ID_AQUI', // O usuário deve substituir
+        appId      : import.meta.env.VITE_FACEBOOK_APP_ID,
         cookie     : true,
         xfbml      : true,
         version    : 'v18.0'
@@ -54,12 +54,17 @@ export default function Dashboard() {
 
   const handleFBLogin = () => {
     setFbStatus('loading');
-    // Simulação de delay de rede
-    setTimeout(() => {
-      setFbStatus('connected');
-      setShowOnboarding(false);
-      window.alert('Conectado com sucesso! Seus anúncios do Instagram foram sincronizados.');
-    }, 1500);
+    window.FB.login(function(response: any) {
+      if (response.authResponse) {
+        console.log('Token de acesso:', response.authResponse.accessToken);
+        setFbStatus('connected');
+        setShowOnboarding(false);
+        window.alert('Conectado com sucesso! Agora você pode importar dados reais.');
+      } else {
+        setFbStatus('idle');
+        window.alert('Login cancelado ou não autorizado.');
+      }
+    }, {scope: 'public_profile,email,ads_read,instagram_basic'});
   };
 
   const stats = useMemo(() => {
