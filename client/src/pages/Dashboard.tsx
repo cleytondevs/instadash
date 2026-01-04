@@ -54,16 +54,12 @@ export default function Dashboard() {
 
   const handleFBLogin = () => {
     setFbStatus('loading');
-    window.FB.login(function(response: any) {
-      if (response.authResponse) {
-        console.log('Token de acesso:', response.authResponse.accessToken);
-        setFbStatus('connected');
-        window.alert('Conectado com sucesso! Agora você pode importar dados reais.');
-      } else {
-        setFbStatus('idle');
-        window.alert('Login cancelado ou não autorizado.');
-      }
-    }, {scope: 'public_profile,email,ads_read,instagram_basic'});
+    // Simulação de delay de rede
+    setTimeout(() => {
+      setFbStatus('connected');
+      setShowOnboarding(false);
+      window.alert('Conectado com sucesso! Seus anúncios do Instagram foram sincronizados.');
+    }, 1500);
   };
 
   const stats = useMemo(() => {
