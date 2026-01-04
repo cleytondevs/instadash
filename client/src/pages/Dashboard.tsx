@@ -135,6 +135,10 @@ export default function Dashboard() {
                 <p className="text-blue-100 max-w-md">
                   Pare de usar dados simulados. Conecte sua conta do Facebook para importar automaticamente seus anúncios impulsionados do Instagram.
                 </p>
+                <p className="text-[10px] text-blue-200 mt-2">
+                  * Este app não é oficial da Meta. Utilizamos a API oficial para vincular seus dados com segurança. 
+                  Ao conectar, você concorda com nossa <Link href="/privacy" className="underline hover:text-white">Política de Privacidade</Link>.
+                </p>
               </div>
               <Button 
                 onClick={handleFBLogin}
