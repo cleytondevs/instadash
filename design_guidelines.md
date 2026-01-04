@@ -1,100 +1,119 @@
-# Marketing Dashboard Design Guidelines
+# Dashboard de Anúncios Instagram - Design Guidelines
 
 ## Design Approach
-**Selected System**: Modern Analytics Dashboard Pattern (inspired by Vercel Dashboard + Linear's data displays + Stripe's metric cards)
+**Selected System**: Ultra-simplified Single-Purpose Dashboard (inspired by Stripe's metric clarity + Notion's onboarding + Linear's typography)
 
-**Justification**: Data-heavy utility application requiring clarity, efficient information hierarchy, and professional credibility. Focus on immediate data comprehension over aesthetic flourish.
+**Justification**: Beginner-friendly utility tool requiring instant comprehension of profit/loss. Eliminate complexity, focus on the three critical numbers entrepreneurs care about most.
+
+**Language**: Portuguese (BR) throughout entire interface
 
 ## Core Design Elements
 
 ### Typography
-- **Primary Font**: Inter (Google Fonts)
+- **Font**: Inter (Google Fonts CDN)
 - **Hierarchy**:
-  - Page titles: text-2xl font-semibold
-  - Section headers: text-lg font-medium
-  - Metric values: text-3xl font-bold (large numbers)
-  - Labels/captions: text-sm text-gray-600 dark:text-gray-400
+  - Hero metrics: text-5xl font-bold (Gastei/Ganhei/Lucro values)
+  - Metric labels: text-sm font-medium uppercase tracking-wide
+  - Section headers: text-xl font-semibold
   - Body text: text-base
+  - Helper text: text-sm text-gray-600
 
 ### Layout System
-**Spacing Primitives**: Tailwind units of 4, 6, 8, 12 (p-4, gap-6, mb-8, py-12)
-
-**Grid Structure**:
-- Dashboard container: max-w-7xl mx-auto px-6
-- Metric cards: grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6
-- Chart sections: grid-cols-1 lg:grid-cols-2 gap-8
-- Data tables: full-width with horizontal scroll
+**Spacing**: Tailwind units 4, 6, 8, 12 (consistent with existing)
+**Container**: max-w-5xl mx-auto px-6 (narrower than analytics dashboard)
 
 ### Component Library
 
-**Navigation Sidebar** (Fixed Left, 240px):
-- Logo area with icon + text
-- Main nav items with Lucide icons (BarChart3, ShoppingBag, DollarSign, Settings, TrendingUp)
-- Active state: accent background with subtle left border indicator
-- Platform switcher dropdown (Instagram/Shopee)
-- Dark/Light mode toggle at bottom
+**Top Navigation Bar**:
+- Logo "InstaDash" (left)
+- "Configurações" link (right)
+- Height: h-16, border-b
+- Profile avatar + "Sair" dropdown
 
-**Top Header Bar**:
-- Page breadcrumb/title on left
-- Date range picker (center-right)
-- Profile avatar + notifications bell (right)
-- Height: h-16 with border-b
+**Hero Metrics Section** (Primary Dashboard View):
+- 3-column grid (grid-cols-1 md:grid-cols-3 gap-8)
+- Each metric card structure:
+  - Small label on top: "Quanto Gastei" / "Quanto Ganhei" / "Lucro"
+  - Massive number: R$ value in text-5xl font-bold
+  - Icon: DollarSign (Lucide) in subtle accent
+- **Lucro Card Special Treatment**:
+  - Positive: Green background gradient (emerald-50 to emerald-100), emerald-700 text
+  - Negative: Red background gradient (red-50 to red-100), red-700 text
+  - Zero: Neutral gray background
+  - Badge with percentage: "+45%" or "-12%"
 
-**Metric Summary Cards** (Top Dashboard Section):
-- 4-column grid: Total Spend, Total Revenue, ROI %, Active Campaigns
-- Card structure: Large numeric value, percentage change indicator (↑/↓ with color), small comparison text ("vs last month")
-- Subtle border, rounded-lg, hover state with slight shadow lift
-- Icons: Lucide icons (DollarSign, TrendingUp, BarChart2, Zap)
+**Quick Status Summary** (Below Hero):
+- Single row with key insights:
+  - "Última atualização: há 2 horas"
+  - "Campanhas ativas: 3"
+  - Visual indicator: Green dot for "Lucro" / Red dot for "Prejuízo"
 
-**Chart Components**:
-- Revenue vs Spend Timeline: Line chart with dual Y-axes, area fill under lines
-- Platform Performance: Horizontal bar chart comparing Instagram vs Shopee metrics
-- ROI Trend: Sparkline micro-charts within metric cards
-- Campaign Breakdown: Donut chart with legend
+**Campaign Performance Table**:
+- Simplified columns: Nome da Campanha, Gasto, Receita, Lucro, Status
+- Status badges: "Ativa" (green), "Pausada" (amber), "Encerrada" (gray)
+- Profit column: Color-coded green (positive) / red (negative)
+- Row hover: subtle background lift
+- "Ver detalhes" link in each row
 
-**Data Table** (Campaign List):
-- Sticky header row
-- Columns: Campaign Name, Platform (badge), Spend, Revenue, ROI, Status (badge), Actions (kebab menu)
-- Row hover state with background change
-- Sortable column headers with arrow icons
-- Pagination footer
+**Onboarding Flow** (For First-Time Users):
+- 3-step guided setup modal:
+  1. "Conecte sua conta Instagram" (OAuth button)
+  2. "Configure seu método de rastreamento" (Pixel/UTM setup)
+  3. "Defina suas metas" (Target ROI input)
+- Progress indicator: 1/3, 2/3, 3/3
+- Large "Começar" primary button
+- Skip option: "Fazer isso depois" subtle link
 
-**Filters Panel**:
-- Platform chips (Instagram/Shopee/All) with active state
-- Date range with preset options (7d, 30d, 90d, Custom)
-- Status dropdown (Active, Paused, Completed)
-- Search input with magnifying glass icon
+**Date Range Selector**:
+- Preset chips: "Hoje", "7 dias", "30 dias", "Este mês"
+- Active state with accent background
+- Positioned below hero metrics
 
-**Status Badges**:
-- Active: green background
-- Paused: yellow/amber background
-- Completed: gray background
-- High ROI indicator: blue accent badge
+**Empty States**:
+- Centered illustration placeholder comment
+- Title: "Nenhum anúncio encontrado"
+- Subtitle: "Conecte sua conta do Instagram para começar"
+- Primary CTA: "Conectar Instagram"
 
-### Dark/Light Mode Specifications
-- Implement via CSS variables for seamless switching
-- Light: bg-gray-50 base, white cards, gray-900 text
-- Dark: bg-gray-950 base, gray-900 cards, gray-100 text
-- Borders: gray-200 (light) / gray-800 (dark)
-- Accent color: Consistent across both (blue-600 works in both modes)
-- Charts: Adjust grid lines and labels for contrast
+**Help/Tutorial Elements**:
+- Floating "?" button (bottom-right, fixed)
+- Tooltips on hover for each metric: "O quanto você investiu em anúncios" etc.
+- First-visit banner: "Primeira vez aqui? Faça o tour guiado" with dismiss X
 
-### Color Usage Strategy
-Use semantic color roles:
-- Success/Positive: Revenue gains, positive ROI
-- Warning: Moderate performance
-- Danger: Budget alerts, negative trends
-- Neutral: Inactive states, borders
-- Primary: CTAs, active states, key metrics
+### Color Strategy (Critical for Profit/Loss)
+**Semantic Profit Colors**:
+- Positive/Lucro: emerald-600, emerald-700, emerald-50 backgrounds
+- Negative/Prejuízo: red-600, red-700, red-50 backgrounds
+- Neutral/Break-even: gray-600
+
+**Base Colors**:
+- Background: gray-50 (light mode), gray-950 (dark mode)
+- Cards: white (light), gray-900 (dark)
+- Primary CTA: blue-600
+- Borders: gray-200 (light), gray-800 (dark)
+
+### Dark/Light Mode
+- Toggle in top-right navigation
+- CSS variables for seamless switching
+- Profit/loss colors remain vibrant in both modes
+- Chart backgrounds adapt for readability
+
+## Visual Hierarchy Emphasis
+1. **Lucro (Profit)** is the hero - largest, most prominent, color-coded
+2. Secondary: Gastei/Ganhei in equal weight
+3. Tertiary: Campaign details below fold
+4. Everything else: Supporting elements
+
+## Responsive Behavior
+- Mobile: Stack hero metrics vertically, full-width
+- Tablet: 2-column for Gastei/Ganhei, Lucro spans full row below
+- Desktop: 3-column equal grid
+
+## Accessibility
+- High contrast ratios for all text
+- Focus states on all interactive elements
+- Screen reader labels in Portuguese
+- Keyboard navigation for entire flow
 
 ## Images
-**No hero images required** - This is a functional dashboard, not a marketing site. Focus purely on data visualization and UI clarity.
-
-## Critical Implementation Notes
-- All charts must be responsive and readable at mobile widths
-- Maintain 8px baseline grid for vertical rhythm
-- Table text alignment: Numbers right-aligned, text left-aligned
-- Loading states: Skeleton screens for async data
-- Empty states: Centered icon + text + CTA button
-- Tooltips on hover for truncated campaign names
-- Export buttons (CSV/PDF) in table header
+**No hero image required** - Dashboard is data-first. Focus purely on metric clarity and clean UI.
