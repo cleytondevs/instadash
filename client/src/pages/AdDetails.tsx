@@ -46,7 +46,7 @@ export default function AdDetails() {
   const deleteAd = useDeleteAd();
 
   if (isLoading) return <DetailsSkeleton />;
-  if (!ad) return <div className="p-8 text-center">Ad not found</div>;
+  if (!ad) return <div className="p-8 text-center">Anúncio não encontrado</div>;
 
   const handleSync = () => {
     syncAd.mutate(adId);
@@ -98,7 +98,7 @@ export default function AdDetails() {
                   "px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider",
                   ad.status === 'active' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
                 )}>
-                  {ad.status}
+                  {ad.status === 'active' ? 'Ativo' : 'Pausado'}
                 </span>
               </h1>
             </div>
@@ -113,7 +113,7 @@ export default function AdDetails() {
               className="border-primary/20 text-primary hover:bg-primary/5 hover:text-primary"
             >
               <RefreshCw className={cn("w-4 h-4 mr-2", syncAd.isPending && "animate-spin")} />
-              {syncAd.isPending ? "Syncing..." : "Sync Data"}
+              {syncAd.isPending ? "Sincronizando..." : "Sincronizar Dados"}
             </Button>
             
             <AlertDialog>
@@ -124,15 +124,15 @@ export default function AdDetails() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the ad campaign and all associated data.
+                    Esta ação não pode ser desfeita. Isso excluirá permanentemente a campanha e todos os dados associados.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                    Delete Campaign
+                    Excluir Campanha
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -145,19 +145,19 @@ export default function AdDetails() {
         {/* Key Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <KPICard 
-            title="Total Revenue" 
+            title="Receita Total" 
             value={formatCurrency(totalRevenue)}
             icon={<TrendingUp className="w-5 h-5" />}
             className="border-l-4 border-l-green-500"
           />
           <KPICard 
-            title="Total Spend" 
+            title="Investimento Total" 
             value={formatCurrency(totalSpend)}
             icon={<Target className="w-5 h-5" />}
             className="border-l-4 border-l-red-400"
           />
           <KPICard 
-            title="Total Clicks" 
+            title="Cliques Totais" 
             value={totalClicks.toLocaleString()}
             subValue={`CTR: ${ctr.toFixed(2)}%`}
             icon={<MousePointer2 className="w-5 h-5" />}
@@ -178,8 +178,8 @@ export default function AdDetails() {
           <div className="lg:col-span-2 glass-card p-6 rounded-2xl">
              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold">Performance Trends</h3>
-                  <p className="text-sm text-muted-foreground">Daily Revenue vs Spend</p>
+                  <h3 className="text-lg font-semibold">Tendências de Desempenho</h3>
+                  <p className="text-sm text-muted-foreground">Receita Diária vs Investimento</p>
                 </div>
              </div>
              <div className="h-[350px]">
@@ -205,12 +205,12 @@ export default function AdDetails() {
                     <Tooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                       formatter={(value: number) => [`R$ ${value/100}`, '']}
-                      labelFormatter={(label) => format(new Date(label), 'PPP')}
+                      labelFormatter={(label) => format(new Date(label), 'PPP', { locale: (window as any).ptBR })}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="revenue" 
-                      name="Revenue"
+                      name="Receita"
                       stroke="hsl(var(--primary))" 
                       strokeWidth={3}
                       dot={false}
@@ -218,7 +218,7 @@ export default function AdDetails() {
                     <Line 
                       type="monotone" 
                       dataKey="spend" 
-                      name="Spend"
+                      name="Investimento"
                       stroke="#94A3B8" 
                       strokeWidth={2}
                       dot={false}
@@ -230,7 +230,7 @@ export default function AdDetails() {
           </div>
 
           <div className="glass-card p-6 rounded-2xl">
-            <h3 className="text-lg font-semibold mb-4">Daily Profit</h3>
+            <h3 className="text-lg font-semibold mb-4">Lucro Diário</h3>
             <div className="h-[350px]">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={sortedReports}>
@@ -246,7 +246,7 @@ export default function AdDetails() {
                            <div className="bg-white p-3 rounded-lg shadow-lg border border-border">
                              <p className="font-bold mb-1">{format(new Date(data.date), 'dd MMM')}</p>
                              <p className={profit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                               Profit: {formatCurrency(profit)}
+                               Lucro: {formatCurrency(profit)}
                              </p>
                            </div>
                          );
@@ -264,18 +264,18 @@ export default function AdDetails() {
         {/* Detailed Table */}
         <div className="glass-card rounded-2xl overflow-hidden shadow-sm">
           <div className="p-6 border-b border-border/50">
-            <h3 className="text-lg font-bold">Daily Breakdown</h3>
+            <h3 className="text-lg font-bold">Detalhamento Diário</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary/30">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Impressions</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clicks</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Impressões</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cliques</th>
                   <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">CTR</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Spend</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Revenue</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Investimento</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Receita</th>
                   <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">ROAS</th>
                 </tr>
               </thead>
@@ -321,7 +321,7 @@ export default function AdDetails() {
           </div>
           {sortedReports.length === 0 && (
             <div className="p-12 text-center text-muted-foreground">
-              No daily data available yet. Click "Sync Data" to fetch latest reports.
+              Nenhum dado diário disponível. Clique em \"Sincronizar Dados\" para buscar os relatórios mais recentes.
             </div>
           )}
         </div>
