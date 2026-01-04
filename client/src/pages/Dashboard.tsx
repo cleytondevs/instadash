@@ -4,18 +4,67 @@ import { Button } from "@/components/ui/button";
 import { 
   BarChart3,
   Search,
+  CheckCircle2,
 } from "lucide-react";
 import { Link } from "wouter";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AdResponse } from "@shared/schema";
 
+declare global {
+  interface Window {
+    fbAsyncInit: () => void;
+    FB: any;
+  }
+}
+
 export default function Dashboard() {
   const { data: ads, isLoading } = useAds() as { data: AdResponse[] | undefined, isLoading: boolean };
   const [searchTerm, setSearchTerm] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [fbStatus, setFbStatus] = useState<'idle' | 'loading' | 'connected'>('idle');
+
+  useEffect(() => {
+    // Carregar SDK do Facebook
+    (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s) as HTMLScriptElement; js.id = id;
+      js.src = "https://connect.facebook.net/pt_BR/sdk.js";
+      fjs.parentNode?.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    window.fbAsyncInit = function() {
+      window.FB.init({
+        appId      : 'SEU_APP_ID_AQUI', // O usuário deve substituir
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v18.0'
+      });
+      
+      window.FB.getLoginStatus(function(response: any) {
+        if (response.status === 'connected') {
+          setFbStatus('connected');
+        }
+      });
+    };
+  }, []);
+
+  const handleFBLogin = () => {
+    setFbStatus('loading');
+    window.FB.login(function(response: any) {
+      if (response.authResponse) {
+        console.log('Token de acesso:', response.authResponse.accessToken);
+        setFbStatus('connected');
+        window.alert('Conectado com sucesso! Agora você pode importar dados reais.');
+      } else {
+        setFbStatus('idle');
+        window.alert('Login cancelado ou não autorizado.');
+      }
+    }, {scope: 'public_profile,email,ads_read,instagram_basic'});
+  };
 
   const stats = useMemo(() => {
     if (!ads || ads.length === 0) return { spend: 0, revenue: 0, profit: 0, roi: 0 };
@@ -92,10 +141,20 @@ export default function Dashboard() {
                 </p>
               </div>
               <Button 
-                onClick={() => window.alert('Para conectar sua conta real, é necessário configurar um Aplicativo na Meta for Developers e obter um Token de Acesso. Por enquanto, esta funcionalidade é apenas visual.')}
-                className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 h-12 rounded-xl shrink-0"
+                onClick={handleFBLogin}
+                disabled={fbStatus === 'loading' || fbStatus === 'connected'}
+                className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 h-12 rounded-xl shrink-0 flex items-center gap-2"
               >
-                Conectar Instagram
+                {fbStatus === 'connected' ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    Instagram Conectado
+                  </>
+                ) : fbStatus === 'loading' ? (
+                  "Conectando..."
+                ) : (
+                  "Conectar Instagram"
+                )}
               </Button>
             </div>
             <button 
