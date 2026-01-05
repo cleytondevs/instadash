@@ -120,16 +120,25 @@ export default function Dashboard() {
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
-      // Usando o backend do Replit como proxy para evitar erros de cache de schema do Supabase (PostgREST)
-      const response = await fetch("/api/sales/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sales),
-      });
+      // 100% Client-side upload to Supabase for Netlify/Supabase architecture
+      // We use a simpler insert to avoid potential schema cache issues
+      const { error } = await supabase
+        .from("sales")
+        .insert(sales.map(s => ({
+          user_id: "default-user",
+          order_id: s.orderId,
+          product_name: s.productName,
+          revenue: s.revenue,
+          clicks: s.clicks,
+          source: s.source,
+          order_date: s.orderDate
+        })));
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao salvar dados no servidor");
+      if (error) {
+        // Se der erro de cache, tentamos forçar uma chamada que limpe o cache se possível
+        // ou apenas reportamos o erro detalhado
+        console.error("Erro no Supabase:", error);
+        throw new Error(`Erro no Supabase: ${error.message}. Tente recarregar a página se o erro persistir.`);
       }
     },
     onSuccess: () => {
