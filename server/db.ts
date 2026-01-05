@@ -29,11 +29,7 @@ export async function setupTables() {
     client = await pool.connect();
     
     await client.query(`
-      DROP TABLE IF EXISTS sales;
-      DROP TABLE IF EXISTS expenses;
-      DROP TABLE IF EXISTS users;
-
-      CREATE TABLE users (
+      CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
@@ -42,7 +38,7 @@ export async function setupTables() {
         fb_access_token TEXT
       );
 
-      CREATE TABLE sales (
+      CREATE TABLE IF NOT EXISTS sales (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id),
         order_id TEXT UNIQUE,
@@ -54,7 +50,7 @@ export async function setupTables() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE expenses (
+      CREATE TABLE IF NOT EXISTS expenses (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id),
         description TEXT NOT NULL,
@@ -63,6 +59,11 @@ export async function setupTables() {
         date DATE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      
+      -- Garantir que as tabelas sejam expostas no schema public para a API
+      ALTER TABLE users OWNER TO postgres;
+      ALTER TABLE sales OWNER TO postgres;
+      ALTER TABLE expenses OWNER TO postgres;
       
       -- Forçar atualização do cache do PostgREST (Supabase)
       NOTIFY pgrst, 'reload schema';
