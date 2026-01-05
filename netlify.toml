@@ -1,0 +1,13 @@
+# Netlify Build Configuration
+# Para o frontend se comunicar com o backend do Replit, 
+# você deve configurar a variável de ambiente VITE_API_URL
+# no painel do Netlify apontando para a URL do seu Replit.
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
