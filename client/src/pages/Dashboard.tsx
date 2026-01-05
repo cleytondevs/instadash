@@ -11,7 +11,8 @@ import {
   Share2,
   Plus,
   AlertCircle,
-  FileText
+  FileText,
+  Search
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 import Papa from "papaparse";
 
 export default function Dashboard() {
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [debugHeaders, setDebugHeaders] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
@@ -91,10 +94,10 @@ export default function Dashboard() {
             return null;
           };
 
-          const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência"]);
-          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço"]);
-          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo"]);
-          const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data"]);
+          const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência", "Order No."]);
+          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount"]);
+          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo", "Order Source"]);
+          const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
 
           if (!orderId) return null;
 
@@ -117,7 +120,7 @@ export default function Dashboard() {
         }).filter(s => s !== null && s.orderId && s.revenue > 0);
 
         if (sales.length === 0) {
-          setLastError("Não conseguimos identificar os dados de vendas. Abaixo estão as colunas que encontramos na sua planilha. Verifique se o arquivo é o 'Relatório de Vendas' da Shopee.");
+          setLastError("Não conseguimos identificar os dados de vendas automaticamente. Verifique se o arquivo é o 'Relatório de Vendas' exportado da Central do Vendedor Shopee.");
           return;
         }
 
@@ -146,7 +149,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#EE4D2D] rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#EE4D2D] rounded-lg flex items-center justify-center shadow-md">
               <BarChart3 className="text-white w-5 h-5" />
             </div>
             <h1 className="text-xl font-bold text-gray-900">InstaDash <span className="text-[#EE4D2D] font-normal">Shopee</span></h1>
@@ -162,7 +165,7 @@ export default function Dashboard() {
             <Button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || uploadMutation.isPending}
-              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2"
+              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2 font-bold shadow-sm"
             >
               <Upload className="w-4 h-4" />
               {isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha Shopee"}
@@ -174,26 +177,29 @@ export default function Dashboard() {
       <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
         {lastError && (
           <div className="space-y-4">
-            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro no Processamento</AlertTitle>
-              <AlertDescription>{lastError}</AlertDescription>
+              <AlertTitle className="font-bold">Atenção!</AlertTitle>
+              <AlertDescription className="text-sm">
+                {lastError}
+              </AlertDescription>
             </Alert>
             
             {debugHeaders.length > 0 && (
-              <Card className="border-dashed border-2">
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
+              <Card className="border-dashed border-2 bg-gray-50/50 rounded-2xl">
+                <CardHeader className="py-4">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-600">
                     <FileText className="w-4 h-4" />
-                    Colunas detectadas na sua planilha:
+                    Colunas detectadas no seu arquivo:
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="py-3">
+                <CardContent className="pb-4">
                   <div className="flex flex-wrap gap-2">
                     {debugHeaders.map((h, i) => (
-                      <span key={i} className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">{h}</span>
+                      <span key={i} className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-mono text-gray-500 shadow-sm">{h}</span>
                     ))}
                   </div>
+                  <p className="text-xs text-gray-400 mt-4 italic">Dica: O InstaDash funciona melhor com o arquivo "Meus Pedidos" ou "Relatório de Vendas".</p>
                 </CardContent>
               </Card>
             )}
@@ -202,39 +208,39 @@ export default function Dashboard() {
 
         {/* Métricas Principais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-none shadow-sm bg-white overflow-hidden">
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
                 <TrendingUp className="w-4 h-4 text-emerald-500" />
-                GANHEI (TOTAL)
+                Faturamento Total
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <div className="text-4xl font-black text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm bg-white overflow-hidden">
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
                 <TrendingDown className="w-4 h-4 text-red-500" />
-                GASTEI (CUSTOS)
+                Custos (Saídas)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats?.totalExpenses || 0)}</div>
+              <div className="text-4xl font-black text-gray-900">{formatCurrency(stats?.totalExpenses || 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className={`border-none shadow-sm overflow-hidden ${stats && stats.netProfit >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all ${stats && stats.netProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
             <CardHeader className="pb-2">
-              <CardTitle className={`text-sm font-medium flex items-center gap-2 ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              <CardTitle className={`text-xs font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 <DollarSign className="w-4 h-4" />
-                LUCRO LÍQUIDO
+                Lucro Líquido
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-3xl font-bold ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+              <div className={`text-4xl font-black ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatCurrency(stats?.netProfit || 0)}
               </div>
             </CardContent>
@@ -243,54 +249,75 @@ export default function Dashboard() {
 
         {/* Divisão de Vendas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-bold">Shopee Vídeo</CardTitle>
-              <Video className="h-5 w-5 text-orange-500" />
+          <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-3xl overflow-hidden group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-8 px-8">
+              <CardTitle className="text-xl font-black text-gray-800">Shopee Vídeo</CardTitle>
+              <div className="p-3 bg-orange-100 rounded-2xl group-hover:bg-[#EE4D2D] transition-colors">
+                <Video className="h-6 w-6 text-[#EE4D2D] group-hover:text-white transition-colors" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black text-[#EE4D2D] mb-1">
+            <CardContent className="px-8 pb-8">
+              <div className="text-5xl font-black text-[#EE4D2D] mb-2 tracking-tighter">
                 {formatCurrency(stats?.videoRevenue || 0)}
               </div>
-              <p className="text-sm text-gray-500">Vendas identificadas via Shopee Vídeo</p>
-              <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <p className="text-sm font-medium text-gray-400">Vendas convertidas por vídeos</p>
+              <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-orange-500" 
+                  className="h-full bg-[#EE4D2D] rounded-full transition-all duration-1000" 
                   style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.videoRevenue / stats.totalRevenue) * 100 : 0}%` }}
                 ></div>
               </div>
+              <p className="text-[10px] font-bold text-gray-300 mt-2 uppercase tracking-widest">
+                Representatividade: {stats && stats.totalRevenue > 0 ? ((stats.videoRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-bold">Redes Sociais</CardTitle>
-              <Share2 className="h-5 w-5 text-blue-500" />
+          <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-3xl overflow-hidden group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-8 px-8">
+              <CardTitle className="text-xl font-black text-gray-800">Redes Sociais</CardTitle>
+              <div className="p-3 bg-blue-100 rounded-2xl group-hover:bg-blue-600 transition-colors">
+                <Share2 className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black text-blue-600 mb-1">
+            <CardContent className="px-8 pb-8">
+              <div className="text-5xl font-black text-blue-600 mb-2 tracking-tighter">
                 {formatCurrency(stats?.socialRevenue || 0)}
               </div>
-              <p className="text-sm text-gray-500">Vendas via links externos e posts</p>
-              <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <p className="text-sm font-medium text-gray-400">Links externos, Bio e Stories</p>
+              <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-blue-600" 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-1000" 
                   style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.socialRevenue / stats.totalRevenue) * 100 : 0}%` }}
                 ></div>
               </div>
+              <p className="text-[10px] font-bold text-gray-300 mt-2 uppercase tracking-widest">
+                Representatividade: {stats && stats.totalRevenue > 0 ? ((stats.socialRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <h3 className="font-bold text-gray-900">Análise de Desempenho</h3>
-            <p className="text-sm text-gray-500">Compare qual canal está trazendo mais lucro hoje.</p>
+        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1 text-center md:text-left">
+            <h3 className="text-lg font-black text-gray-900">Análise de Canal</h3>
+            <p className="text-sm font-medium text-gray-500">Qual canal está trazendo faturamento agora?</p>
           </div>
-          <Button variant="outline" className="gap-2">
-            <Plus className="w-4 h-4" />
-            Adicionar Custo Manual
-          </Button>
+          <div className="flex items-center gap-4 w-full md:w-auto">
+             <div className="relative flex-1 md:w-64">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+               <Input 
+                 placeholder="Buscar pedidos..." 
+                 className="pl-10 rounded-xl border-gray-200 h-11"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+               />
+             </div>
+             <Button variant="outline" className="h-11 rounded-xl font-bold px-6 border-gray-200">
+               <Plus className="w-4 h-4 mr-2" />
+               Custo Manual
+             </Button>
+          </div>
         </div>
       </main>
     </div>
