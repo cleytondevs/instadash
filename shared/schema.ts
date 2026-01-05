@@ -20,6 +20,7 @@ export const sales = pgTable("sales", {
   orderDate: date("order_date").notNull(),
   source: text("source").notNull(), // 'shopee_video' or 'social_media'
   revenue: integer("revenue").notNull(), // In cents
+  clicks: integer("clicks").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -76,6 +77,8 @@ export interface DashboardStats {
   totalExpenses: number;
   netProfit: number;
   totalOrders: number;
+  totalClicks: number;
+  socialClicks: number;
   topProduct: {
     name: string;
     orders: number;

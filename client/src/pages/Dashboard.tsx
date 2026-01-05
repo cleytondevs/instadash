@@ -14,7 +14,8 @@ import {
   FileText,
   Search,
   Trophy,
-  ShoppingCart
+  ShoppingCart,
+  MousePointer2
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ export default function Dashboard() {
           const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo", "Order Source", "Sub ID", "Sub-ID"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product"]);
+          const rawClicks = getVal(["Cliques", "Clicks", "Número de cliques", "Visualizações de página"]);
 
           if (!orderId) return null;
 
@@ -120,7 +122,8 @@ export default function Dashboard() {
             orderDate: rawDate || new Date().toISOString(),
             revenue: isNaN(revenueCents) ? 0 : revenueCents,
             source: source,
-            productName: productName ? String(productName).trim() : "Produto Indefinido"
+            productName: productName ? String(productName).trim() : "Produto Indefinido",
+            clicks: parseInt(String(rawClicks || "0"), 10) || 0
           };
         }).filter(s => s !== null && s.orderId && s.revenue > 0);
 
@@ -211,7 +214,7 @@ export default function Dashboard() {
         )}
 
         {/* Métricas Principais */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
@@ -220,7 +223,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-black text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <div className="text-4xl font-black text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </CardContent>
           </Card>
 
@@ -244,12 +247,15 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-3xl font-black ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+              <div className={`text-4xl font-black ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatCurrency(stats?.netProfit || 0)}
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Métricas de Engajamento */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
@@ -258,7 +264,43 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
+              <div className="text-2xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <MousePointer2 className="w-4 h-4 text-purple-500" />
+                Total Cliques
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black text-gray-900">{stats?.totalClicks || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <Share2 className="w-4 h-4 text-blue-600" />
+                Cliques Redes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <Video className="w-4 h-4 text-orange-500" />
+                Cliques Vídeo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black text-gray-900">{(stats?.totalClicks || 0) - (stats?.socialClicks || 0)}</div>
             </CardContent>
           </Card>
         </div>

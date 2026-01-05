@@ -86,6 +86,11 @@ export class DatabaseStorage implements IStorage {
     const totalRevenue = videoRevenue + socialRevenue;
     const totalExpenses = userExpenses.reduce((sum, e) => sum + e.amount, 0);
     const totalOrders = userSales.length;
+    
+    const totalClicks = userSales.reduce((sum, s) => sum + (s.clicks || 0), 0);
+    const socialClicks = userSales
+      .filter(s => s.source === 'social_media')
+      .reduce((sum, s) => sum + (s.clicks || 0), 0);
 
     // Calculate top product
     const productCounts: Record<string, number> = {};
@@ -111,6 +116,8 @@ export class DatabaseStorage implements IStorage {
       totalExpenses,
       netProfit: totalRevenue - totalExpenses,
       totalOrders,
+      totalClicks,
+      socialClicks,
       topProduct
     };
   }
