@@ -55,6 +55,19 @@ export default function DataDeletion() {
             Se você deseja que apaguemos manualmente qualquer registro de uso ou cache do nosso banco de dados, você pode enviar um e-mail para o nosso suporte com o assunto "Exclusão de Dados Meta" informando seu User ID.
           </p>
 
+          <div id="deletion-status" className="hidden p-4 bg-green-50 border border-green-100 rounded-xl text-green-800 text-sm font-medium">
+            Sua solicitação de exclusão foi processada. Código: <span id="confirmation-code"></span>
+          </div>
+
+          <script dangerouslySetInnerHTML={{ __html: `
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (id) {
+              document.getElementById('deletion-status').classList.remove('hidden');
+              document.getElementById('confirmation-code').innerText = id;
+            }
+          `}} />
+
           <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-blue-800 text-sm italic">
             Nota: O InstaDash não armazena seus dados de anúncios de forma permanente. Os dados são consultados em tempo real e qualquer cache local é removido automaticamente quando você desconecta sua conta.
           </div>

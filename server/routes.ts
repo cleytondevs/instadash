@@ -3,8 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertSaleSchema, insertExpenseSchema } from "@shared/schema";
 import { z } from "zod";
+import { handleDataDeletion } from "./facebook-callback";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  // Facebook Data Deletion Callback
+  app.post("/api/facebook/deletion", handleDataDeletion);
+  
   // Sales stats
   app.get("/api/stats", async (req, res) => {
     try {
