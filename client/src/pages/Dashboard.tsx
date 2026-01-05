@@ -16,15 +16,24 @@ import {
   Trophy,
   ShoppingCart,
   MousePointer2,
-  Sparkles
+  Sparkles,
+  Package
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import Papa from "papaparse";
 
 export default function Dashboard() {
@@ -34,6 +43,7 @@ export default function Dashboard() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [debugHeaders, setDebugHeaders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [localProducts, setLocalProducts] = useState<any[]>([]);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
@@ -137,6 +147,7 @@ export default function Dashboard() {
         }
 
         uploadMutation.mutate(sales);
+        setLocalProducts(sales);
       },
       error: (error) => {
         setIsUploading(false);
@@ -153,6 +164,14 @@ export default function Dashboard() {
       currency: 'BRL'
     }).format(cents / 100);
   };
+
+  const filteredProducts = useMemo(() => {
+    if (!localProducts.length) return [];
+    return localProducts.filter(p => 
+      p.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.orderId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [localProducts, searchTerm]);
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -444,6 +463,41 @@ export default function Dashboard() {
              </Button>
           </div>
         </div>
+
+        {filteredProducts.length > 0 && (
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-3xl">
+            <CardHeader className="px-8 pt-8">
+              <CardTitle className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <Package className="w-5 h-5 text-[#EE4D2D]" />
+                Produtos Carregados
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-8 pb-8">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="font-bold text-gray-900">ID do Pedido</TableHead>
+                      <TableHead className="font-bold text-gray-900">Produto</TableHead>
+                      <TableHead className="font-bold text-gray-900 text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((product, index) => (
+                      <TableRow key={`${product.orderId}-${index}`} className="hover:bg-gray-50 transition-colors">
+                        <TableCell className="font-mono text-sm text-gray-500">{product.orderId}</TableCell>
+                        <TableCell className="font-medium text-gray-900">{product.productName}</TableCell>
+                        <TableCell className="text-right font-bold text-emerald-600">
+                          {formatCurrency(product.revenue)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
