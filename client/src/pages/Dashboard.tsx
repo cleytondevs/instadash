@@ -62,59 +62,70 @@ export default function Dashboard() {
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       // Prioritizing direct Supabase fetch for Netlify (Front) + Supabase (Back) setup
-      const { data: salesData, error: salesError } = await supabase
-        .from("sales")
-        .select("*")
-        .eq("user_id", "default-user");
+      try {
+        const { data: salesData, error: salesError } = await supabase
+          .from("sales")
+          .select("*")
+          .eq("user_id", "default-user");
 
-      const { data: expensesData, error: expensesError } = await supabase
-        .from("expenses")
-        .select("*")
-        .eq("user_id", "default-user");
+        const { data: expensesData, error: expensesError } = await supabase
+          .from("expenses")
+          .select("*")
+          .eq("user_id", "default-user");
 
-      if (salesError || expensesError) throw salesError || expensesError;
-
-      const videoRevenue = (salesData || [])
-        .filter((s: any) => s.source === 'shopee_video')
-        .reduce((sum: number, s: any) => sum + s.revenue, 0);
-
-      const socialRevenue = (salesData || [])
-        .filter((s: any) => s.source === 'social_media')
-        .reduce((sum: number, s: any) => sum + s.revenue, 0);
-
-      const totalRevenue = videoRevenue + socialRevenue;
-      const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + e.amount, 0);
-      const totalOrders = (salesData || []).length;
-      
-      const productCounts: Record<string, number> = {};
-      (salesData || []).forEach((sale: any) => {
-        if (sale.product_name) {
-          productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
+        if (salesError || expensesError) {
+          console.error("Erro na busca de dados:", salesError || expensesError);
+          throw salesError || expensesError;
         }
-      });
 
-      let topProduct = null;
-      let maxOrders = 0;
-      for (const [name, count] of Object.entries(productCounts)) {
-        if (count > maxOrders) {
-          maxOrders = count;
-          topProduct = { name, orders: count };
-        }
-      }
+        const videoRevenue = (salesData || [])
+          .filter((s: any) => s.source === 'shopee_video')
+          .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
 
-      return {
-        totalRevenue,
-        videoRevenue,
-        socialRevenue,
-        totalExpenses,
-        netProfit: totalRevenue - totalExpenses,
-        totalOrders,
-        totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
-        socialClicks: (salesData || [])
+        const socialRevenue = (salesData || [])
           .filter((s: any) => s.source === 'social_media')
-          .reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
-        topProduct
-      };
+          .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
+
+        const totalRevenue = videoRevenue + socialRevenue;
+        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+        const totalOrders = (salesData || []).length;
+        
+        const productCounts: Record<string, number> = {};
+        (salesData || []).forEach((sale: any) => {
+          if (sale.product_name) {
+            productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
+          }
+        });
+
+        let topProduct = null;
+        let maxOrders = 0;
+        for (const [name, count] of Object.entries(productCounts)) {
+          if (count > maxOrders) {
+            maxOrders = count;
+            topProduct = { name, orders: count };
+          }
+        }
+
+        const stats = {
+          totalRevenue,
+          videoRevenue,
+          socialRevenue,
+          totalExpenses,
+          netProfit: totalRevenue - totalExpenses,
+          totalOrders,
+          totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
+          socialClicks: (salesData || [])
+            .filter((s: any) => s.source === 'social_media')
+            .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
+          topProduct
+        };
+        
+        console.log("Stats calculadas:", stats);
+        return stats;
+      } catch (err) {
+        console.error("Erro crítico na Dashboard:", err);
+        throw err;
+      }
     }
   });
 
