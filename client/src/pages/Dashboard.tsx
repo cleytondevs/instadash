@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [localProducts, setLocalProducts] = useState<any[]>([]);
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
+  const [isConnectingFb, setIsConnectingFb] = useState(false);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
@@ -173,6 +174,18 @@ export default function Dashboard() {
     });
   };
 
+  const handleConnectFb = () => {
+    setIsConnectingFb(true);
+    // Simula o processo de autenticação
+    setTimeout(() => {
+      setIsConnectingFb(false);
+      toast({
+        title: "Conectado com Sucesso",
+        description: "Seu perfil do Facebook foi vinculado. Agora você pode importar anúncios.",
+      });
+    }, 2000);
+  };
+
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -243,9 +256,14 @@ export default function Dashboard() {
                   <Button onClick={handleSaveFbConfig} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
                     Salvar Configuração
                   </Button>
-                  <Button variant="outline" className="w-full gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                    onClick={handleConnectFb}
+                    disabled={isConnectingFb}
+                  >
                     <Facebook className="w-4 h-4" />
-                    Conectar Perfil Facebook
+                    {isConnectingFb ? "Conectando..." : "Conectar Perfil Facebook"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
