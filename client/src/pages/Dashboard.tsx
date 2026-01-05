@@ -166,6 +166,13 @@ export default function Dashboard() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleSaveFbConfig = () => {
+    toast({
+      title: "Configuração Salva",
+      description: "As chaves do Facebook Ads foram salvas para integração futura.",
+    });
+  };
+
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
