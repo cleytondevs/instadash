@@ -239,9 +239,13 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="flex-col gap-2">
                   <Button onClick={handleSaveFbConfig} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
                     Salvar Configuração
+                  </Button>
+                  <Button variant="outline" className="w-full gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+                    <Facebook className="w-4 h-4" />
+                    Conectar Perfil Facebook
                   </Button>
                 </DialogFooter>
               </DialogContent>
