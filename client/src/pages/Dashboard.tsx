@@ -343,7 +343,7 @@ export default function Dashboard() {
           description: "O login com o Facebook foi cancelado ou falhou.",
         });
       }
-    }, { scope: 'ads_management,ads_read,read_insights' });
+    }, { scope: 'public_profile,email' });
   };
 
   const [fbAdSpend, setFbAdSpend] = useState<number>(0);
