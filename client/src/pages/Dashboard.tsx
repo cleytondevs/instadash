@@ -61,9 +61,48 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/stats");
-      if (!response.ok) throw new Error("Falha ao carregar estatísticas");
-      return response.json();
+      try {
+        const response = await fetch("/api/stats");
+        if (!response.ok) throw new Error("Falha ao carregar estatísticas");
+        return response.json();
+      } catch (error) {
+        console.error("Dashboard stats error:", error);
+        // Fallback para Supabase se a API falhar (ex: no Netlify sem VITE_API_URL configurado)
+        const { data: salesData } = await supabase
+          .from("sales")
+          .select("*")
+          .eq("user_id", "default-user");
+
+        const { data: expensesData } = await supabase
+          .from("expenses")
+          .select("*")
+          .eq("user_id", "default-user");
+
+        const videoRevenue = (salesData || [])
+          .filter((s: any) => s.source === 'shopee_video')
+          .reduce((sum: number, s: any) => sum + s.revenue, 0);
+
+        const socialRevenue = (salesData || [])
+          .filter((s: any) => s.source === 'social_media')
+          .reduce((sum: number, s: any) => sum + s.revenue, 0);
+
+        const totalRevenue = videoRevenue + socialRevenue;
+        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + e.amount, 0);
+        
+        return {
+          totalRevenue,
+          videoRevenue,
+          socialRevenue,
+          totalExpenses,
+          netProfit: totalRevenue - totalExpenses,
+          totalOrders: (salesData || []).length,
+          totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
+          socialClicks: (salesData || [])
+            .filter((s: any) => s.source === 'social_media')
+            .reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
+          topProduct: null // Simplificado para o fallback
+        };
+      }
     }
   });
 
