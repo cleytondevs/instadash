@@ -11,6 +11,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const stats = await storage.getDashboardStats("default-user");
       res.json(stats);
     } catch (err) {
+      console.error("Stats fetch error:", err);
       res.status(500).json({ message: "Internal server error" });
     }
   });

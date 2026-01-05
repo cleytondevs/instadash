@@ -49,7 +49,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSales(userId: string): Promise<Sale[]> {
-    return db.select().from(sales).where(eq(sales.userId, userId));
+    try {
+      return await db.select().from(sales).where(eq(sales.userId, userId));
+    } catch (error) {
+      console.error("Database query error (getSales):", error);
+      throw error;
+    }
   }
 
   async bulkCreateSales(salesList: (InsertSale & { userId: string })[], resetExisting: boolean): Promise<void> {
