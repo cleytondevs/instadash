@@ -15,7 +15,8 @@ import {
   Search,
   Trophy,
   ShoppingCart,
-  MousePointer2
+  MousePointer2,
+  Sparkles
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -305,39 +306,73 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Produto Mais Vendido */}
+        {/* Produto Mais Vendido - Novo Design */}
         {stats?.topProduct && (
-          <Card className="border-none shadow-sm bg-[#1E293B] text-white overflow-hidden rounded-3xl p-1">
-            <div className="bg-[#EE4D2D] p-4 flex items-center justify-between rounded-t-[1.4rem]">
-              <div className="flex items-center gap-3">
-                <Trophy className="w-6 h-6 text-yellow-400" />
-                <span className="font-black uppercase tracking-widest text-xs">Produto Campeão</span>
-              </div>
-              <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold">TOP VENDAS</span>
-            </div>
-            <CardContent className="p-8">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2">
-                  <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
-                    {stats.topProduct.name}
-                  </h2>
-                  <p className="text-gray-400 font-medium">O produto que mais gerou resultados nesta planilha</p>
-                </div>
-                <div className="flex items-center gap-4 bg-white/5 p-6 rounded-3xl border border-white/10 shrink-0">
-                  <div className="text-center px-4 border-r border-white/10">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pedidos</p>
-                    <p className="text-4xl font-black text-white">{stats.topProduct.orders}</p>
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#EE4D2D] to-orange-400 rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+            <Card className="relative border-none shadow-2xl bg-white overflow-hidden rounded-[2.5rem]">
+              <div className="flex flex-col md:flex-row min-h-[280px]">
+                {/* Lado Esquerdo - Info */}
+                <div className="flex-1 p-8 md:p-12 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-orange-100 rounded-2xl">
+                      <Trophy className="w-6 h-6 text-[#EE4D2D]" />
+                    </div>
+                    <span className="text-[#EE4D2D] font-black uppercase tracking-[0.2em] text-xs">Produto Revelação</span>
                   </div>
-                  <div className="text-center px-4">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Impacto</p>
-                    <p className="text-4xl font-black text-[#EE4D2D]">
-                      {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
+                  
+                  <div className="space-y-4">
+                    <h2 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight tracking-tighter">
+                      {stats.topProduct.name}
+                    </h2>
+                    <p className="text-lg text-gray-500 font-medium max-w-lg">
+                      Líder absoluto em conversões. Este produto dominou os resultados da sua última análise.
                     </p>
                   </div>
+
+                  <div className="flex items-center gap-4 pt-4">
+                    <div className="flex -space-x-2">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="w-10 h-10 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center">
+                          <Plus className="w-4 h-4 text-gray-300" />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm font-bold text-gray-400">+ clientes interessados</p>
+                  </div>
+                </div>
+
+                {/* Lado Direito - Stats */}
+                <div className="w-full md:w-[320px] bg-gradient-to-br from-[#1E293B] to-[#0F172A] p-8 md:p-12 flex flex-col justify-center items-center text-center space-y-8">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center gap-2 text-orange-400 mb-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Performance</span>
+                    </div>
+                    <p className="text-6xl md:text-7xl font-black text-white tracking-tighter">
+                      {stats.topProduct.orders}
+                    </p>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Vendas Confirmadas</p>
+                  </div>
+
+                  <div className="w-full h-px bg-white/10" />
+
+                  <div className="grid grid-cols-2 w-full gap-4">
+                    <div className="text-center">
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Impacto</p>
+                      <p className="text-2xl font-black text-white">
+                        {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Rank</p>
+                      <p className="text-2xl font-black text-orange-400">#1</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
         )}
 
         {/* Divisão de Vendas */}
