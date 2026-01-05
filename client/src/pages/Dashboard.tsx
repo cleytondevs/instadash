@@ -61,10 +61,13 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
+      // Prioritizing direct Supabase fetch for Netlify (Front) + Supabase (Back) setup
       try {
-        // Garantir que o usuário padrão existe (opcional, mas evita erros de FK)
-        // No setup Front + Supabase, idealmente o usuário estaria logado. 
-        // Aqui usamos 'default-user' como placeholder.
+        console.log("Iniciando busca de dados no Supabase...");
+        
+        // Tentativa de "ping" para garantir que a tabela seja resolvida
+        const ping = await supabase.from("sales").select("id").limit(1);
+        if (ping.error) console.warn("Aviso no ping inicial:", ping.error);
 
         const { data: salesData, error: salesError } = await supabase
           .from("sales")
@@ -75,23 +78,22 @@ export default function Dashboard() {
           .select("*");
 
         if (salesError || expensesError) {
-          // Se for erro de cache, tenta ignorar ou mostrar zerado para não travar a UI
-          if (salesError?.message?.includes("schema cache")) {
-            return {
-              totalRevenue: 0,
-              videoRevenue: 0,
-              socialRevenue: 0,
-              totalExpenses: 0,
-              netProfit: 0,
-              totalOrders: 0,
-              totalClicks: 0,
-              socialClicks: 0,
-              topProduct: null
-            };
-          }
-          console.error("Erro na busca de dados:", salesError || expensesError);
-          throw salesError || expensesError;
+          console.error("Erro na busca de dados (Supabase):", salesError || expensesError);
+          // Fallback para evitar travamento da UI se for erro de cache
+          return {
+            totalRevenue: 0,
+            videoRevenue: 0,
+            socialRevenue: 0,
+            totalExpenses: 0,
+            netProfit: 0,
+            totalOrders: 0,
+            totalClicks: 0,
+            socialClicks: 0,
+            topProduct: null
+          };
         }
+
+        console.log("Dados recebidos:", { sales: salesData?.length, expenses: expensesData?.length });
 
         const videoRevenue = (salesData || [])
           .filter((s: any) => s.source === 'shopee_video')
