@@ -121,24 +121,28 @@ export default function Dashboard() {
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
       // 100% Client-side upload to Supabase for Netlify/Supabase architecture
-      // We use a simpler insert to avoid potential schema cache issues
-      const { error } = await supabase
-        .from("sales")
-        .insert(sales.map(s => ({
-          user_id: "default-user",
-          order_id: s.orderId,
-          product_name: s.productName,
-          revenue: s.revenue,
-          clicks: s.clicks,
-          source: s.source,
-          order_date: s.orderDate
-        })));
+      // Usamos o RPC do Supabase ou uma técnica de "ping" para garantir que o cache do schema seja atualizado
+      try {
+        // Tenta uma consulta simples primeiro para "acordar" o PostgREST do Supabase
+        await supabase.from("sales").select("id").limit(1);
 
-      if (error) {
-        // Se der erro de cache, tentamos forçar uma chamada que limpe o cache se possível
-        // ou apenas reportamos o erro detalhado
-        console.error("Erro no Supabase:", error);
-        throw new Error(`Erro no Supabase: ${error.message}. Tente recarregar a página se o erro persistir.`);
+        const { error } = await supabase
+          .from("sales")
+          .insert(sales.map(s => ({
+            user_id: "default-user",
+            order_id: s.orderId,
+            product_name: s.productName,
+            revenue: s.revenue,
+            clicks: s.clicks,
+            source: s.source,
+            order_date: s.orderDate
+          })));
+
+        if (error) throw error;
+      } catch (err: any) {
+        // Se ainda assim der erro de cache, é provável que a tabela precise de permissões explícitas no Supabase
+        console.error("Erro no Supabase:", err);
+        throw new Error(`Erro no Supabase: ${err.message}. Isso geralmente ocorre quando a tabela acaba de ser criada. Acesse seu painel do Supabase, vá em SQL Editor e execute: 'NOTIFY pgrst, "reload schema";'`);
       }
     },
     onSuccess: () => {
