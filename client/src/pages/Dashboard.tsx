@@ -502,6 +502,16 @@ export default function Dashboard() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
+                  <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 text-xs space-y-2">
+                    <p className="font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Configuração Obrigatória no Painel Meta:
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong>Domínio:</strong> instadashshopee.netlify.app</li>
+                      <li><strong>Privacidade:</strong> https://instadashshopee.netlify.app/privacy</li>
+                      <li><strong>Termos:</strong> https://instadashshopee.netlify.app/terms</li>
+                    </ul>
+                  </div>
                   <div className="grid gap-2">
                     <label htmlFor="appId" className="text-sm font-bold">App ID</label>
                     <Input 
