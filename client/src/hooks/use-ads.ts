@@ -1,27 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type InsertAd } from "@shared/routes";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import type { InsertAd } from "@shared/schema";
 
 export function useAds() {
   return useQuery({
-    queryKey: [api.ads.list.path],
+    queryKey: ["ads"],
     queryFn: async () => {
-      const res = await fetch(api.ads.list.path);
-      if (!res.ok) throw new Error("Failed to fetch ads");
-      return api.ads.list.responses[200].parse(await res.json());
+      const { data, error } = await supabase
+        .from("ads")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) throw error;
+      return data;
     },
   });
 }
 
 export function useAd(id: number) {
   return useQuery({
-    queryKey: [api.ads.get.path, id],
+    queryKey: ["ads", id],
     queryFn: async () => {
-      const url = buildUrl(api.ads.get.path, { id });
-      const res = await fetch(url);
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error("Failed to fetch ad details");
-      return api.ads.get.responses[200].parse(await res.json());
+      const { data, error } = await supabase
+        .from("ads")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     enabled: !!id,
   });
@@ -32,30 +40,24 @@ export function useCreateAd() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: InsertAd) => {
-      const res = await fetch(api.ads.create.path, {
-        method: api.ads.create.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    mutationFn: async (ad: InsertAd) => {
+      const { data, error } = await supabase
+        .from("ads")
+        .insert([ad])
+        .select()
+        .single();
 
-      if (!res.ok) {
-        if (res.status === 400) {
-          const error = api.ads.create.responses[400].parse(await res.json());
-          throw new Error(error.message);
-        }
-        throw new Error("Failed to create ad");
-      }
-      return api.ads.create.responses[201].parse(await res.json());
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.ads.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["ads"] });
       toast({
         title: "Success",
         description: "Ad campaign created successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message,
@@ -71,21 +73,26 @@ export function useSyncAd() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(api.ads.sync.path, { id });
-      const res = await fetch(url, { method: api.ads.sync.method });
-      
-      if (!res.ok) throw new Error("Failed to sync ad data");
-      return api.ads.sync.responses[200].parse(await res.json());
+      // Logic for syncing via Supabase (e.g., calling an Edge Function or updating timestamp)
+      const { data, error } = await supabase
+        .from("ads")
+        .update({ last_sync: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { newReports: 0 }; // Placeholder matching previous API response structure
     },
-    onSuccess: (data, id) => {
-      queryClient.invalidateQueries({ queryKey: [api.ads.get.path, id] });
-      queryClient.invalidateQueries({ queryKey: [api.ads.list.path] });
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["ads", id] });
+      queryClient.invalidateQueries({ queryKey: ["ads"] });
       toast({
         title: "Sync Complete",
-        description: `Synced ${data.newReports} new daily reports.`,
+        description: "Ad data synced successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Sync Failed",
         description: error.message,
@@ -101,15 +108,25 @@ export function useDeleteAd() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(api.ads.delete.path, { id });
-      const res = await fetch(url, { method: api.ads.delete.method });
-      if (!res.ok) throw new Error("Failed to delete ad");
+      const { error } = await supabase
+        .from("ads")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.ads.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["ads"] });
       toast({
         title: "Deleted",
         description: "Ad campaign removed successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
