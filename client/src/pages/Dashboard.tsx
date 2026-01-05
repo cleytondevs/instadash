@@ -129,6 +129,7 @@ export default function Dashboard() {
           
           return {
             orderId: String(orderId).trim(),
+            subId: subId ? String(subId).trim() : "-",
             orderDate: rawDate || new Date().toISOString(),
             revenue: isNaN(revenueCents) ? 0 : revenueCents,
             source: source,
@@ -474,6 +475,7 @@ export default function Dashboard() {
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="font-bold text-gray-900">ID do Pedido</TableHead>
+                      <TableHead className="font-bold text-gray-900">Sub ID</TableHead>
                       <TableHead className="font-bold text-gray-900">Produto</TableHead>
                       <TableHead className="font-bold text-gray-900 text-right">Valor</TableHead>
                     </TableRow>
@@ -482,6 +484,7 @@ export default function Dashboard() {
                     {filteredProducts.map((product, index) => (
                       <TableRow key={`${product.orderId}-${index}`} className="hover:bg-gray-50 transition-colors">
                         <TableCell className="font-mono text-sm text-gray-500">{product.orderId}</TableCell>
+                        <TableCell className="font-mono text-sm text-gray-500">{product.subId}</TableCell>
                         <TableCell className="font-medium text-gray-900">{product.productName}</TableCell>
                         <TableCell className="text-right font-bold text-emerald-600">
                           {formatCurrency(product.revenue)}
