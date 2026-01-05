@@ -116,7 +116,7 @@ export default function Dashboard() {
           .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
 
         const totalRevenue = videoRevenue + socialRevenue;
-        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0) + fbAdSpend;
         
         const productCounts: Record<string, number> = {};
         (salesData || []).forEach((sale: any) => {
@@ -332,9 +332,9 @@ export default function Dashboard() {
       if (response.authResponse) {
         toast({
           title: "Conectado com Sucesso",
-          description: "Seu perfil do Facebook foi vinculado. Token de acesso obtido.",
+          description: "Seu perfil do Facebook foi vinculado. Agora você pode buscar relatórios.",
         });
-        // Aqui poderíamos enviar o response.authResponse.accessToken para o backend
+        fetchAdSpend();
       } else {
         toast({
           variant: "destructive",
@@ -342,7 +342,46 @@ export default function Dashboard() {
           description: "O login com o Facebook foi cancelado ou falhou.",
         });
       }
-    }, { scope: 'ads_management,ads_read' });
+    }, { scope: 'ads_management,ads_read,read_insights' });
+  };
+
+  const [fbAdSpend, setFbAdSpend] = useState<number>(0);
+  const [isFetchingAds, setIsFetchingAds] = useState(false);
+
+  const fetchAdSpend = () => {
+    if (!(window as any).FB) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "SDK do Facebook não carregado. Tente conectar novamente.",
+      });
+      return;
+    }
+
+    setIsFetchingAds(true);
+    (window as any).FB.api(
+      '/me/adaccounts',
+      'GET',
+      { fields: 'id,name,amount_spent,account_id' },
+      (response: any) => {
+        if (response && !response.error) {
+          const totalSpent = response.data.reduce((sum: number, acc: any) => sum + (parseFloat(acc.amount_spent) || 0), 0);
+          setFbAdSpend(Math.floor(totalSpent * 100)); // Convert to cents
+          toast({
+            title: "Relatório Atualizado",
+            description: `Gastos de anúncios carregados: ${formatCurrency(Math.floor(totalSpent * 100))}`,
+          });
+        } else {
+          console.error("Erro ao buscar gastos:", response.error);
+          toast({
+            variant: "destructive",
+            title: "Erro na API",
+            description: response.error?.message || "Não foi possível buscar os gastos.",
+          });
+        }
+        setIsFetchingAds(false);
+      }
+    );
   };
 
   const formatCurrency = (cents: number) => {
@@ -465,6 +504,15 @@ export default function Dashboard() {
                   >
                     <Facebook className="w-4 h-4" />
                     {isConnectingFb ? "Conectando..." : "Conectar Perfil Facebook"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                    onClick={fetchAdSpend}
+                    disabled={isFetchingAds}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {isFetchingAds ? "Buscando..." : "Atualizar Gastos Meta"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
