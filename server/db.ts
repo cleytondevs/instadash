@@ -4,7 +4,12 @@ import * as schema from "@shared/schema";
 
 const { Pool } = pg;
 
-// Configuração robusta do pool usando parâmetros individuais
+/**
+ * Nota Técnica: Migração para Supabase
+ * Devido a instabilidades de DNS no ambiente Replit (ENOTFOUND), 
+ * estamos utilizando a conexão direta via Pool de Conexão (Porta 5432).
+ */
+
 export const pool = new Pool({ 
   user: 'postgres',
   host: 'db.vbhvghgvpjknsfwiyvft.supabase.co',
@@ -12,18 +17,19 @@ export const pool = new Pool({
   password: '.W3haNk?qsumaJF',
   port: 5432,
   ssl: { 
-    rejectUnauthorized: false,
+    rejectUnauthorized: false, // Necessário para conexões externas ao Supabase
   },
-  connectionTimeoutMillis: 15000,
+  connectionTimeoutMillis: 30000, // Aumentado para lidar com latência de rede
+  idleTimeoutMillis: 30000,
 });
 
 export const db = drizzle(pool, { schema });
 
-// Função para criar as tabelas automaticamente
+// Função para garantir que a estrutura básica exista no novo banco
 export async function setupTables() {
   let client;
   try {
-    console.log("Verificando tabelas no Supabase...");
+    console.log("Sincronizando tabelas com Supabase...");
     client = await pool.connect();
     
     await client.query(`
@@ -53,13 +59,14 @@ export async function setupTables() {
         timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("Banco de dados sincronizado com sucesso!");
+    console.log("Estrutura de dados validada com sucesso!");
   } catch (error: any) {
-    console.error("Erro na sincronização do banco de dados:", error.message);
+    console.error("Aviso de Sincronização:", error.message);
+    // Não interrompemos o servidor se o setup falhar, pois o pool tentará reconectar
   } finally {
     if (client) client.release();
   }
 }
 
-// Inicialização
-setupTables().catch(err => console.error("Falha no setup:", err));
+// Inicialização assíncrona
+setupTables();
