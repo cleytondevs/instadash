@@ -175,15 +175,54 @@ export default function Dashboard() {
   };
 
   const handleConnectFb = () => {
-    setIsConnectingFb(true);
-    // Simula o processo de autenticação
-    setTimeout(() => {
-      setIsConnectingFb(false);
+    if (!fbConfig.appId) {
       toast({
-        title: "Conectado com Sucesso",
-        description: "Seu perfil do Facebook foi vinculado. Agora você pode importar anúncios.",
+        variant: "destructive",
+        title: "App ID ausente",
+        description: "Por favor, insira o App ID do seu aplicativo Meta.",
       });
-    }, 2000);
+      return;
+    }
+
+    // Inicializa o SDK do Facebook dinamicamente se ainda não estiver carregado
+    if (!(window as any).FB) {
+      const script = document.createElement('script');
+      script.src = "https://connect.facebook.net/en_US/sdk.js";
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        (window as any).FB.init({
+          appId: fbConfig.appId,
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0'
+        });
+        loginWithFb();
+      };
+      document.body.appendChild(script);
+    } else {
+      loginWithFb();
+    }
+  };
+
+  const loginWithFb = () => {
+    setIsConnectingFb(true);
+    (window as any).FB.login((response: any) => {
+      setIsConnectingFb(false);
+      if (response.authResponse) {
+        toast({
+          title: "Conectado com Sucesso",
+          description: "Seu perfil do Facebook foi vinculado. Token de acesso obtido.",
+        });
+        // Aqui poderíamos enviar o response.authResponse.accessToken para o backend
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Falha na conexão",
+          description: "O login com o Facebook foi cancelado ou falhou.",
+        });
+      }
+    }, { scope: 'ads_management,ads_read' });
   };
 
   const formatCurrency = (cents: number) => {
