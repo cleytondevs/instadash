@@ -65,13 +65,11 @@ export default function Dashboard() {
       try {
         const { data: salesData, error: salesError } = await supabase
           .from("sales")
-          .select("*")
-          .eq("user_id", "default-user");
+          .select("*"); // Removendo o filtro de user_id temporariamente para testar a visibilidade
 
         const { data: expensesData, error: expensesError } = await supabase
           .from("expenses")
-          .select("*")
-          .eq("user_id", "default-user");
+          .select("*");
 
         if (salesError || expensesError) {
           console.error("Erro na busca de dados:", salesError || expensesError);
