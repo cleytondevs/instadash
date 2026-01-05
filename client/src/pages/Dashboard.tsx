@@ -348,6 +348,48 @@ export default function Dashboard() {
     );
   }, [localProducts, searchTerm]);
 
+  const deleteBatchMutation = useMutation({
+    mutationFn: async (batchId: string) => {
+      const { error } = await supabase
+        .from("sales")
+        .delete()
+        .eq("batch_id", batchId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["upload-batches"] });
+      toast({
+        title: "Sucesso",
+        description: "Upload removido com sucesso.",
+      });
+    },
+  });
+
+  const { data: uploadBatches } = useQuery({
+    queryKey: ["upload-batches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sales")
+        .select("batch_id, upload_date")
+        .order("upload_date", { ascending: false });
+      
+      if (error) throw error;
+      
+      const uniqueBatches = new Map();
+      data?.forEach((item: any) => {
+        if (item.batch_id && !uniqueBatches.has(item.batch_id)) {
+          uniqueBatches.set(item.batch_id, {
+            id: item.batch_id,
+            date: item.upload_date,
+            count: data.filter((s: any) => s.batch_id === item.batch_id).length
+          });
+        }
+      });
+      return Array.from(uniqueBatches.values());
+    }
+  });
+
   if (isLoading) return <DashboardSkeleton />;
 
   return (
@@ -467,6 +509,76 @@ export default function Dashboard() {
         )}
 
         {/* Métricas Principais */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+            <Button 
+              variant={timeFilter === "all" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setTimeFilter("all")}
+              className="rounded-lg"
+            >
+              Tudo
+            </Button>
+            <Button 
+              variant={timeFilter === "weekly" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setTimeFilter("weekly")}
+              className="rounded-lg"
+            >
+              Semanal
+            </Button>
+            <Button 
+              variant={timeFilter === "monthly" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setTimeFilter("monthly")}
+              className="rounded-lg"
+            >
+              Mensal
+            </Button>
+          </div>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl">
+                <FileText className="w-4 h-4" />
+                Gerenciar Uploads
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Histórico de Uploads</DialogTitle>
+                <DialogDescription>
+                  Visualize e gerencie os arquivos que você subiu.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[300px] overflow-y-auto space-y-2 py-4">
+                {uploadBatches?.map((batch) => (
+                  <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">
+                        {new Date(batch.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      <p className="text-xs text-gray-500">{batch.count} vendas importadas</p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => deleteBatchMutation.mutate(batch.id)}
+                      disabled={deleteBatchMutation.isPending}
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                {(!uploadBatches || uploadBatches.length === 0) && (
+                  <p className="text-center text-gray-500 py-8 text-sm">Nenhum upload realizado ainda.</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
