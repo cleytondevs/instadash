@@ -107,9 +107,9 @@ export default function Dashboard() {
             return null;
           };
 
+          const subId = getVal(["Sub ID", "Sub-ID", "Sub_ID"]);
           const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência", "Order No."]);
           const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount", "Total"]);
-          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo", "Order Source", "Sub ID", "Sub-ID"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product"]);
           const rawClicks = getVal(["Cliques", "Clicks", "Número de cliques", "Visualizações de página"]);
@@ -123,13 +123,8 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
-          const hasSubId = !!getVal(["Sub ID", "Sub-ID"]);
-          const isPending = String(rawStatus || "").toLowerCase().includes("pendente") || String(rawStatus || "").toLowerCase().includes("pending");
-          
-          // Lógica: Se for PENDENTE ou tiver Sub ID -> Redes Sociais. Caso contrário -> Shopee Video.
-          const source = (hasSubId || isPending) 
-            ? "social_media" 
-            : "shopee_video";
+          // Lógica: Se tiver Sub ID -> Redes Sociais. Caso contrário -> Shopee Video.
+          const source = subId ? "social_media" : "shopee_video";
           
           return {
             orderId: String(orderId).trim(),
