@@ -167,7 +167,10 @@ export default function Dashboard() {
             { onConflict: 'order_id' }
           );
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Erro no upsert:", insertError);
+          throw insertError;
+        }
       } catch (err: any) {
         throw new Error(`Erro: ${err.message}`);
       }
