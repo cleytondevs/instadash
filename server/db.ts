@@ -30,28 +30,30 @@ export async function setupTables() {
     
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
+        id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS sales (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
+        user_id TEXT REFERENCES users(id),
         order_id TEXT UNIQUE,
         product_name TEXT,
         revenue INTEGER NOT NULL,
         clicks INTEGER DEFAULT 0,
         source TEXT,
+        order_date DATE,
         timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS expenses (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
+        user_id TEXT REFERENCES users(id),
         description TEXT NOT NULL,
         amount INTEGER NOT NULL,
         category TEXT,
+        date DATE,
         timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
