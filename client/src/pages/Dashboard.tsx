@@ -61,65 +61,79 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      try {
-        const response = await fetch("/api/stats");
-        if (!response.ok) throw new Error("Falha ao carregar estatísticas");
-        return response.json();
-      } catch (error) {
-        console.error("Dashboard stats error:", error);
-        // Fallback para Supabase se a API falhar (ex: no Netlify sem VITE_API_URL configurado)
-        const { data: salesData } = await supabase
-          .from("sales")
-          .select("*")
-          .eq("user_id", "default-user");
+      // Prioritizing direct Supabase fetch for Netlify (Front) + Supabase (Back) setup
+      const { data: salesData, error: salesError } = await supabase
+        .from("sales")
+        .select("*")
+        .eq("user_id", "default-user");
 
-        const { data: expensesData } = await supabase
-          .from("expenses")
-          .select("*")
-          .eq("user_id", "default-user");
+      const { data: expensesData, error: expensesError } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", "default-user");
 
-        const videoRevenue = (salesData || [])
-          .filter((s: any) => s.source === 'shopee_video')
-          .reduce((sum: number, s: any) => sum + s.revenue, 0);
+      if (salesError || expensesError) throw salesError || expensesError;
 
-        const socialRevenue = (salesData || [])
-          .filter((s: any) => s.source === 'social_media')
-          .reduce((sum: number, s: any) => sum + s.revenue, 0);
+      const videoRevenue = (salesData || [])
+        .filter((s: any) => s.source === 'shopee_video')
+        .reduce((sum: number, s: any) => sum + s.revenue, 0);
 
-        const totalRevenue = videoRevenue + socialRevenue;
-        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + e.amount, 0);
-        
-        return {
-          totalRevenue,
-          videoRevenue,
-          socialRevenue,
-          totalExpenses,
-          netProfit: totalRevenue - totalExpenses,
-          totalOrders: (salesData || []).length,
-          totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
-          socialClicks: (salesData || [])
-            .filter((s: any) => s.source === 'social_media')
-            .reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
-          topProduct: null // Simplificado para o fallback
-        };
+      const socialRevenue = (salesData || [])
+        .filter((s: any) => s.source === 'social_media')
+        .reduce((sum: number, s: any) => sum + s.revenue, 0);
+
+      const totalRevenue = videoRevenue + socialRevenue;
+      const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + e.amount, 0);
+      const totalOrders = (salesData || []).length;
+      
+      const productCounts: Record<string, number> = {};
+      (salesData || []).forEach((sale: any) => {
+        if (sale.product_name) {
+          productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
+        }
+      });
+
+      let topProduct = null;
+      let maxOrders = 0;
+      for (const [name, count] of Object.entries(productCounts)) {
+        if (count > maxOrders) {
+          maxOrders = count;
+          topProduct = { name, orders: count };
+        }
       }
+
+      return {
+        totalRevenue,
+        videoRevenue,
+        socialRevenue,
+        totalExpenses,
+        netProfit: totalRevenue - totalExpenses,
+        totalOrders,
+        totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
+        socialClicks: (salesData || [])
+          .filter((s: any) => s.source === 'social_media')
+          .reduce((sum: number, s: any) => sum + (s.clicks || 0), 0),
+        topProduct
+      };
     }
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
-      // Enviar para o backend ao invés de usar o cliente Supabase diretamente
-      // Isso resolve problemas de cache de schema do PostgREST (Supabase)
-      const response = await fetch("/api/sales/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sales),
-      });
+      // Using Supabase directly for a Netlify (Front) + Supabase (Back) architecture
+      const { error } = await supabase
+        .from("sales")
+        .insert(sales.map(s => ({
+          user_id: "default-user",
+          order_id: s.orderId,
+          product_name: s.productName,
+          revenue: s.revenue,
+          clicks: s.clicks,
+          source: s.source,
+          order_date: s.orderDate
+        })));
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao salvar dados no servidor");
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
