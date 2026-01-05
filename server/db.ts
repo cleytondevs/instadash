@@ -4,28 +4,29 @@ import * as schema from "@shared/schema";
 
 const { Pool } = pg;
 
-// URL de conexão do banco de dados (Secret DATABASE_URL no Replit)
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  console.warn("DATABASE_URL não configurada. Certifique-se de adicionar a URL do Supabase nos Secrets.");
-}
-
+// Configuração robusta do pool usando parâmetros individuais
 export const pool = new Pool({ 
-  connectionString,
-  ssl: { rejectUnauthorized: false }
+  user: 'postgres',
+  host: 'db.vbhvghgvpjknsfwiyvft.supabase.co',
+  database: 'postgres',
+  password: '.W3haNk?qsumaJF',
+  port: 5432,
+  ssl: { 
+    rejectUnauthorized: false,
+  },
+  connectionTimeoutMillis: 15000,
 });
 
 export const db = drizzle(pool, { schema });
 
-// Função para criar as tabelas automaticamente se necessário
+// Função para criar as tabelas automaticamente
 export async function setupTables() {
-  if (!connectionString) return;
-  
+  let client;
   try {
     console.log("Verificando tabelas no Supabase...");
+    client = await pool.connect();
     
-    await pool.query(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
@@ -52,11 +53,13 @@ export async function setupTables() {
         timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-
     console.log("Banco de dados sincronizado com sucesso!");
-  } catch (error) {
-    console.error("Erro ao sincronizar tabelas:", error.message);
+  } catch (error: any) {
+    console.error("Erro na sincronização do banco de dados:", error.message);
+  } finally {
+    if (client) client.release();
   }
 }
 
-setupTables().catch(console.error);
+// Inicialização
+setupTables().catch(err => console.error("Falha no setup:", err));
