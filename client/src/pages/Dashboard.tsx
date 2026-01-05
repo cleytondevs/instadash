@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DashboardStats, InsertSale } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabase";
 import { 
   BarChart3, 
   Upload, 
@@ -15,11 +16,10 @@ import {
   Search,
   Trophy,
   ShoppingCart,
-  MousePointer2,
   Sparkles,
-  Package,
   Settings,
-  Facebook
+  Facebook,
+  Package
 } from "lucide-react";
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -59,15 +59,86 @@ export default function Dashboard() {
   const [isConnectingFb, setIsConnectingFb] = useState(false);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/stats"],
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const { data: salesData, error: salesError } = await supabase
+        .from("sales")
+        .select("*")
+        .eq("user_id", "default-user");
+
+      const { data: expensesData, error: expensesError } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", "default-user");
+
+      if (salesError || expensesError) throw salesError || expensesError;
+
+      const videoRevenue = (salesData || [])
+        .filter((s: any) => s.source === 'shopee_video')
+        .reduce((sum: number, s: any) => sum + s.revenue, 0);
+
+      const socialRevenue = (salesData || [])
+        .filter((s: any) => s.source === 'social_media')
+        .reduce((sum: number, s: any) => sum + s.revenue, 0);
+
+      const totalRevenue = videoRevenue + socialRevenue;
+      const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + e.amount, 0);
+      const totalOrders = (salesData || []).length;
+      const totalClicks = (salesData || []).reduce((sum: number, s: any) => sum + (s.clicks || 0), 0);
+      const socialClicks = (salesData || [])
+        .filter((s: any) => s.source === 'social_media')
+        .reduce((sum: number, s: any) => sum + (s.clicks || 0), 0);
+
+      const productCounts: Record<string, number> = {};
+      (salesData || []).forEach((sale: any) => {
+        if (sale.product_name) {
+          productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
+        }
+      });
+
+      let topProduct = null;
+      let maxOrders = 0;
+      for (const [name, count] of Object.entries(productCounts)) {
+        if (count > maxOrders) {
+          maxOrders = count;
+          topProduct = { name, orders: count };
+        }
+      }
+
+      return {
+        totalRevenue,
+        videoRevenue,
+        socialRevenue,
+        totalExpenses,
+        netProfit: totalRevenue - totalExpenses,
+        totalOrders,
+        totalClicks,
+        socialClicks,
+        topProduct
+      };
+    }
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
-      await apiRequest("POST", "/api/sales/bulk", sales);
+      // Deletar existentes para o usuário padrão (como no backend)
+      await supabase.from("sales").delete().eq("user_id", "default-user");
+      
+      const formattedSales = sales.map(s => ({
+        user_id: "default-user",
+        order_id: s.orderId,
+        product_name: s.productName,
+        order_date: s.orderDate,
+        source: s.source,
+        revenue: s.revenue,
+        clicks: s.clicks
+      }));
+
+      const { error } = await supabase.from("sales").insert(formattedSales);
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setLastError(null);
       setDebugHeaders([]);
       toast({
@@ -76,14 +147,11 @@ export default function Dashboard() {
       });
     },
     onError: (error: any) => {
-      const errorMsg = error.response?.data?.message || "Falha ao importar dados.";
-      const details = error.response?.data?.details ? `\nDetalhes: ${error.response.data.details.join(', ')}` : "";
-      
-      setLastError(`${errorMsg}${details}`);
+      setLastError(`Erro ao enviar dados para o Supabase: ${error.message}`);
       toast({
         variant: "destructive",
-        title: "Erro no Servidor",
-        description: errorMsg,
+        title: "Erro no Supabase",
+        description: error.message,
       });
     },
   });
