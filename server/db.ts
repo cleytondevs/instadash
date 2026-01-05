@@ -11,15 +11,11 @@ const { Pool } = pg;
  */
 
 export const pool = new Pool({ 
-  user: 'postgres',
-  host: 'db.vbhvghgvpjknsfwiyvft.supabase.co',
-  database: 'postgres',
-  password: '.W3haNk?qsumaJF',
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
   ssl: { 
-    rejectUnauthorized: false, // Necessário para conexões externas ao Supabase
+    rejectUnauthorized: false, 
   },
-  connectionTimeoutMillis: 30000, // Aumentado para lidar com latência de rede
+  connectionTimeoutMillis: 30000, 
   idleTimeoutMillis: 30000,
 });
 

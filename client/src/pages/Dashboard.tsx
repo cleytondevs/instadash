@@ -76,11 +76,14 @@ export default function Dashboard() {
       });
     },
     onError: (error: any) => {
-      setLastError("Erro ao enviar dados para o servidor. Verifique se o formato da planilha está correto.");
+      const errorMsg = error.response?.data?.message || "Falha ao importar dados.";
+      const details = error.response?.data?.details ? `\nDetalhes: ${error.response.data.details.join(', ')}` : "";
+      
+      setLastError(`${errorMsg}${details}`);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Falha ao importar dados.",
+        title: "Erro no Servidor",
+        description: errorMsg,
       });
     },
   });

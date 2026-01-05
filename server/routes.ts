@@ -19,12 +19,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/sales/bulk", async (req, res) => {
     try {
       const salesList = z.array(insertSaleSchema).parse(req.body);
-      // resetExisting is true as requested by user
       await storage.bulkCreateSales(salesList.map(s => ({ ...s, userId: "default-user" })), true);
       res.status(201).json({ message: "Sales imported successfully" });
     } catch (err) {
       console.error("Bulk sales error:", err);
-      res.status(400).json({ message: "Invalid sales data" });
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Erro de validação nos dados da planilha", 
+          details: err.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        });
+      }
+      res.status(500).json({ message: "Erro interno ao processar a planilha. Verifique a conexão com o banco de dados." });
     }
   });
 
