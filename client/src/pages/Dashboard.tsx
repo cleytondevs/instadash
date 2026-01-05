@@ -75,6 +75,20 @@ export default function Dashboard() {
           .select("*");
 
         if (salesError || expensesError) {
+          // Se for erro de cache, tenta ignorar ou mostrar zerado para não travar a UI
+          if (salesError?.message?.includes("schema cache")) {
+            return {
+              totalRevenue: 0,
+              videoRevenue: 0,
+              socialRevenue: 0,
+              totalExpenses: 0,
+              netProfit: 0,
+              totalOrders: 0,
+              totalClicks: 0,
+              socialClicks: 0,
+              topProduct: null
+            };
+          }
           console.error("Erro na busca de dados:", salesError || expensesError);
           throw salesError || expensesError;
         }
@@ -114,9 +128,9 @@ export default function Dashboard() {
     mutationFn: async (sales: any[]) => {
       // 100% Client-side upload to Supabase for Netlify/Supabase architecture
       try {
-        // Tenta limpar o cache do schema via RPC se disponível, ou apenas segue com o insert
-        // O erro de cache é comum no Supabase quando tabelas são criadas via SQL externo
-        
+        // Ping inicial para "acordar" o Supabase se necessário
+        await supabase.from("sales").select("id").limit(1);
+
         const { error } = await supabase
           .from("sales")
           .insert(sales.map(s => ({
@@ -129,29 +143,11 @@ export default function Dashboard() {
             order_date: s.orderDate
           })));
 
-        if (error) {
-          if (error.message.includes("schema cache")) {
-             // Tenta uma segunda vez após um pequeno delay se for erro de cache
-             await new Promise(resolve => setTimeout(resolve, 1000));
-             const { error: retryError } = await supabase
-              .from("sales")
-              .insert(sales.map(s => ({
-                user_id: "default-user",
-                order_id: s.orderId,
-                product_name: s.productName,
-                revenue: s.revenue,
-                clicks: s.clicks,
-                source: s.source,
-                order_date: s.orderDate
-              })));
-             if (retryError) throw retryError;
-          } else {
-            throw error;
-          }
-        }
+        if (error) throw error;
       } catch (err: any) {
         console.error("Erro no Supabase:", err);
-        throw new Error(`Erro no Supabase: ${err.message}. Certifique-se de que a tabela 'sales' existe e o cache foi atualizado.`);
+        // Se ainda der erro de cache, sugerimos o comando de atualização
+        throw new Error(`Erro no Supabase: ${err.message}. Tente recarregar a página. Se o erro persistir, o cache do Supabase precisa ser limpo.`);
       }
     },
     onSuccess: () => {
