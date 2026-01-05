@@ -85,13 +85,33 @@ export class DatabaseStorage implements IStorage {
 
     const totalRevenue = videoRevenue + socialRevenue;
     const totalExpenses = userExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalOrders = userSales.length;
+
+    // Calculate top product
+    const productCounts: Record<string, number> = {};
+    userSales.forEach(sale => {
+      if (sale.productName) {
+        productCounts[sale.productName] = (productCounts[sale.productName] || 0) + 1;
+      }
+    });
+
+    let topProduct = null;
+    let maxOrders = 0;
+    for (const [name, count] of Object.entries(productCounts)) {
+      if (count > maxOrders) {
+        maxOrders = count;
+        topProduct = { name, orders: count };
+      }
+    }
 
     return {
       totalRevenue,
       videoRevenue,
       socialRevenue,
       totalExpenses,
-      netProfit: totalRevenue - totalExpenses
+      netProfit: totalRevenue - totalExpenses,
+      totalOrders,
+      topProduct
     };
   }
 }

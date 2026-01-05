@@ -16,6 +16,7 @@ export const sales = pgTable("sales", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   orderId: text("order_id").notNull().unique(),
+  productName: text("product_name"),
   orderDate: date("order_date").notNull(),
   source: text("source").notNull(), // 'shopee_video' or 'social_media'
   revenue: integer("revenue").notNull(), // In cents
@@ -74,4 +75,9 @@ export interface DashboardStats {
   socialRevenue: number;
   totalExpenses: number;
   netProfit: number;
+  totalOrders: number;
+  topProduct: {
+    name: string;
+    orders: number;
+  } | null;
 }

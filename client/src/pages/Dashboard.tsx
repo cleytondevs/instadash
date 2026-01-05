@@ -12,7 +12,9 @@ import {
   Plus,
   AlertCircle,
   FileText,
-  Search
+  Search,
+  Trophy,
+  ShoppingCart
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -74,7 +76,6 @@ export default function Dashboard() {
         setIsUploading(false);
         const headers = results.meta.fields || [];
         setDebugHeaders(headers);
-        console.log("CSV Headers found:", headers);
         
         if (results.data.length === 0) {
           setLastError("A planilha parece estar vazia.");
@@ -98,6 +99,7 @@ export default function Dashboard() {
           const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount", "Total"]);
           const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo", "Order Source", "Sub ID", "Sub-ID"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
+          const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product"]);
 
           if (!orderId) return null;
 
@@ -107,9 +109,6 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
-          // Lógica: Se tiver Sub ID (mesmo que vazio mas presente, ou com valor), vai para Redes Sociais. 
-          // O resto vai para Shopee Video como solicitado.
-          // Como o usuário disse "criado manualmente com sub id", vamos checar se a coluna existe e tem valor.
           const hasSubId = !!getVal(["Sub ID", "Sub-ID"]);
           
           const source = hasSubId 
@@ -121,6 +120,7 @@ export default function Dashboard() {
             orderDate: rawDate || new Date().toISOString(),
             revenue: isNaN(revenueCents) ? 0 : revenueCents,
             source: source,
+            productName: productName ? String(productName).trim() : "Produto Indefinido"
           };
         }).filter(s => s !== null && s.orderId && s.revenue > 0);
 
@@ -211,7 +211,7 @@ export default function Dashboard() {
         )}
 
         {/* Métricas Principais */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
@@ -220,7 +220,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-black text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <div className="text-3xl font-black text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </CardContent>
           </Card>
 
@@ -232,7 +232,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-black text-gray-900">{formatCurrency(stats?.totalExpenses || 0)}</div>
+              <div className="text-3xl font-black text-gray-900">{formatCurrency(stats?.totalExpenses || 0)}</div>
             </CardContent>
           </Card>
 
@@ -244,12 +244,59 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-4xl font-black ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+              <div className={`text-3xl font-black ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatCurrency(stats?.netProfit || 0)}
               </div>
             </CardContent>
           </Card>
+
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <ShoppingCart className="w-4 h-4 text-blue-500" />
+                Total Pedidos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Produto Mais Vendido */}
+        {stats?.topProduct && (
+          <Card className="border-none shadow-sm bg-[#1E293B] text-white overflow-hidden rounded-3xl p-1">
+            <div className="bg-[#EE4D2D] p-4 flex items-center justify-between rounded-t-[1.4rem]">
+              <div className="flex items-center gap-3">
+                <Trophy className="w-6 h-6 text-yellow-400" />
+                <span className="font-black uppercase tracking-widest text-xs">Produto Campeão</span>
+              </div>
+              <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold">TOP VENDAS</span>
+            </div>
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                    {stats.topProduct.name}
+                  </h2>
+                  <p className="text-gray-400 font-medium">O produto que mais gerou resultados nesta planilha</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white/5 p-6 rounded-3xl border border-white/10 shrink-0">
+                  <div className="text-center px-4 border-r border-white/10">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pedidos</p>
+                    <p className="text-4xl font-black text-white">{stats.topProduct.orders}</p>
+                  </div>
+                  <div className="text-center px-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Impacto</p>
+                    <p className="text-4xl font-black text-[#EE4D2D]">
+                      {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Divisão de Vendas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -271,9 +318,6 @@ export default function Dashboard() {
                   style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.videoRevenue / stats.totalRevenue) * 100 : 0}%` }}
                 ></div>
               </div>
-              <p className="text-[10px] font-bold text-gray-300 mt-2 uppercase tracking-widest">
-                Participação: {stats && stats.totalRevenue > 0 ? ((stats.videoRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
-              </p>
             </CardContent>
           </Card>
 
@@ -295,9 +339,6 @@ export default function Dashboard() {
                   style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.socialRevenue / stats.totalRevenue) * 100 : 0}%` }}
                 ></div>
               </div>
-              <p className="text-[10px] font-bold text-gray-300 mt-2 uppercase tracking-widest">
-                Participação: {stats && stats.totalRevenue > 0 ? ((stats.socialRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
-              </p>
             </CardContent>
           </Card>
         </div>
