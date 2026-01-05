@@ -491,7 +491,7 @@ export default function Dashboard() {
                   Configurar Meta
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Facebook className="w-5 h-5 text-blue-600" />
@@ -504,12 +504,12 @@ export default function Dashboard() {
                 <div className="grid gap-4 py-4">
                   <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 text-xs space-y-2">
                     <p className="font-bold flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> Configuração Obrigatória no Painel Meta:
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" /> Configuração Obrigatória no Painel Meta:
                     </p>
                     <ul className="list-disc pl-4 space-y-1">
-                      <li><strong>Domínio:</strong> instadashshopee.netlify.app</li>
-                      <li><strong>Privacidade:</strong> https://instadashshopee.netlify.app/privacy</li>
-                      <li><strong>Termos:</strong> https://instadashshopee.netlify.app/terms</li>
+                      <li className="break-all"><strong>Domínio:</strong> instadashshopee.netlify.app</li>
+                      <li className="break-all"><strong>Privacidade:</strong> https://instadashshopee.netlify.app/privacy</li>
+                      <li className="break-all"><strong>Termos:</strong> https://instadashshopee.netlify.app/terms</li>
                     </ul>
                   </div>
                   <div className="grid gap-2">
@@ -532,7 +532,7 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
-                <DialogFooter className="flex-col gap-2">
+                <DialogFooter className="flex flex-col gap-2 sm:flex-col sm:space-x-0">
                   <Button onClick={handleSaveFbConfig} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
                     Salvar Configuração
                   </Button>
