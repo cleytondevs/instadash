@@ -61,11 +61,14 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      // Prioritizing direct Supabase fetch for Netlify (Front) + Supabase (Back) setup
       try {
+        // Garantir que o usuário padrão existe (opcional, mas evita erros de FK)
+        // No setup Front + Supabase, idealmente o usuário estaria logado. 
+        // Aqui usamos 'default-user' como placeholder.
+
         const { data: salesData, error: salesError } = await supabase
           .from("sales")
-          .select("*"); // Removendo o filtro de user_id temporariamente para testar a visibilidade
+          .select("*");
 
         const { data: expensesData, error: expensesError } = await supabase
           .from("expenses")
@@ -86,40 +89,20 @@ export default function Dashboard() {
 
         const totalRevenue = videoRevenue + socialRevenue;
         const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
-        const totalOrders = (salesData || []).length;
         
-        const productCounts: Record<string, number> = {};
-        (salesData || []).forEach((sale: any) => {
-          if (sale.product_name) {
-            productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
-          }
-        });
-
-        let topProduct = null;
-        let maxOrders = 0;
-        for (const [name, count] of Object.entries(productCounts)) {
-          if (count > maxOrders) {
-            maxOrders = count;
-            topProduct = { name, orders: count };
-          }
-        }
-
-        const stats = {
+        return {
           totalRevenue,
           videoRevenue,
           socialRevenue,
           totalExpenses,
           netProfit: totalRevenue - totalExpenses,
-          totalOrders,
+          totalOrders: (salesData || []).length,
           totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
           socialClicks: (salesData || [])
             .filter((s: any) => s.source === 'social_media')
             .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
-          topProduct
+          topProduct: null
         };
-        
-        console.log("Stats calculadas:", stats);
-        return stats;
       } catch (err) {
         console.error("Erro crítico na Dashboard:", err);
         throw err;
