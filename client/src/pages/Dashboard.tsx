@@ -274,7 +274,7 @@ export default function Dashboard() {
         </div>
 
         {/* Métricas de Engajamento */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
@@ -290,36 +290,12 @@ export default function Dashboard() {
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <MousePointer2 className="w-4 h-4 text-purple-500" />
-                Total Cliques
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-black text-gray-900">{stats?.totalClicks || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
                 <Share2 className="w-4 h-4 text-blue-600" />
                 Cliques Redes
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <Video className="w-4 h-4 text-orange-500" />
-                Cliques Vídeo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-black text-gray-900">{(stats?.totalClicks || 0) - (stats?.socialClicks || 0)}</div>
             </CardContent>
           </Card>
         </div>
