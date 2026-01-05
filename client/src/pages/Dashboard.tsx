@@ -58,7 +58,7 @@ export default function Dashboard() {
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
   const [isConnectingFb, setIsConnectingFb] = useState(false);
 
-  const [timeFilter, setTimeFilter] = useState<"all" | "weekly" | "monthly">("all");
+  const [timeFilter, setTimeFilter] = useState<"today" | "weekly" | "monthly" | "all">("all");
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
@@ -67,7 +67,11 @@ export default function Dashboard() {
       try {
         let query = supabase.from("sales").select("*");
         
-        if (timeFilter === "weekly") {
+        const now = new Date();
+        if (timeFilter === "today") {
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          query = query.gte("order_date", today);
+        } else if (timeFilter === "weekly") {
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           query = query.gte("order_date", oneWeekAgo.toISOString());
@@ -513,20 +517,20 @@ export default function Dashboard() {
 
         {/* Métricas Principais */}
         <div className="flex items-center justify-between gap-4">
-          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
             <Button 
-              variant={timeFilter === "all" ? "default" : "ghost"} 
+              variant={timeFilter === "today" ? "default" : "ghost"} 
               size="sm" 
-              onClick={() => setTimeFilter("all")}
-              className="rounded-lg"
+              onClick={() => setTimeFilter("today")}
+              className="rounded-lg whitespace-nowrap"
             >
-              Tudo
+              Hoje
             </Button>
             <Button 
               variant={timeFilter === "weekly" ? "default" : "ghost"} 
               size="sm" 
               onClick={() => setTimeFilter("weekly")}
-              className="rounded-lg"
+              className="rounded-lg whitespace-nowrap"
             >
               Semanal
             </Button>
@@ -534,9 +538,17 @@ export default function Dashboard() {
               variant={timeFilter === "monthly" ? "default" : "ghost"} 
               size="sm" 
               onClick={() => setTimeFilter("monthly")}
-              className="rounded-lg"
+              className="rounded-lg whitespace-nowrap"
             >
               Mensal
+            </Button>
+            <Button 
+              variant={timeFilter === "all" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setTimeFilter("all")}
+              className="rounded-lg whitespace-nowrap"
+            >
+              Tudo
             </Button>
           </div>
 
