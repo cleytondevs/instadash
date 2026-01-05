@@ -19,7 +19,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.post("/api/sales/bulk", async (req, res) => {
     try {
       const salesList = z.array(insertSaleSchema).parse(req.body);
-      await storage.bulkCreateSales(salesList.map(s => ({ ...s, userId: "default-user" })));
+      // resetExisting is true as requested by user
+      await storage.bulkCreateSales(salesList.map(s => ({ ...s, userId: "default-user" })), true);
       res.status(201).json({ message: "Sales imported successfully" });
     } catch (err) {
       console.error("Bulk sales error:", err);

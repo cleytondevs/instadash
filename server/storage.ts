@@ -17,7 +17,7 @@ export interface IStorage {
   // Sales
   createSale(sale: InsertSale & { userId: string }): Promise<Sale>;
   getSales(userId: string): Promise<Sale[]>;
-  bulkCreateSales(salesList: (InsertSale & { userId: string })[]): Promise<void>;
+  bulkCreateSales(salesList: (InsertSale & { userId: string })[], resetExisting: boolean): Promise<void>;
 
   // Expenses
   createExpense(expense: InsertExpense & { userId: string }): Promise<Expense>;
@@ -52,7 +52,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(sales).where(eq(sales.userId, userId));
   }
 
-  async bulkCreateSales(salesList: (InsertSale & { userId: string })[]): Promise<void> {
+  async bulkCreateSales(salesList: (InsertSale & { userId: string })[], resetExisting: boolean): Promise<void> {
+    if (resetExisting && salesList.length > 0) {
+      const userId = salesList[0].userId;
+      await db.delete(sales).where(eq(sales.userId, userId));
+    }
+    
     if (salesList.length === 0) return;
     await db.insert(sales).values(salesList).onConflictDoNothing({ target: sales.orderId });
   }

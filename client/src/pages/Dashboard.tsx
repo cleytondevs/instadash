@@ -45,7 +45,7 @@ export default function Dashboard() {
       setDebugHeaders([]);
       toast({
         title: "Sucesso!",
-        description: "Planilha processada e vendas importadas.",
+        description: "Planilha processada e vendas importadas. Dados antigos foram substituídos.",
       });
     },
     onError: (error: any) => {
@@ -95,8 +95,8 @@ export default function Dashboard() {
           };
 
           const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência", "Order No."]);
-          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount"]);
-          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo", "Order Source"]);
+          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount", "Total"]);
+          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo", "Order Source", "Sub ID", "Sub-ID"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
 
           if (!orderId) return null;
@@ -107,9 +107,14 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
-          const source = String(rawSource || "").toLowerCase().includes("video") 
-            ? "shopee_video" 
-            : "social_media";
+          // Lógica: Se tiver Sub ID (mesmo que vazio mas presente, ou com valor), vai para Redes Sociais. 
+          // O resto vai para Shopee Video como solicitado.
+          // Como o usuário disse "criado manualmente com sub id", vamos checar se a coluna existe e tem valor.
+          const hasSubId = !!getVal(["Sub ID", "Sub-ID"]);
+          
+          const source = hasSubId 
+            ? "social_media" 
+            : "shopee_video";
           
           return {
             orderId: String(orderId).trim(),
@@ -120,7 +125,7 @@ export default function Dashboard() {
         }).filter(s => s !== null && s.orderId && s.revenue > 0);
 
         if (sales.length === 0) {
-          setLastError("Não conseguimos identificar os dados de vendas automaticamente. Verifique se o arquivo é o 'Relatório de Vendas' exportado da Central do Vendedor Shopee.");
+          setLastError("Não conseguimos identificar os dados de vendas automaticamente. Verifique se o arquivo é o exportado da Shopee.");
           return;
         }
 
@@ -199,7 +204,6 @@ export default function Dashboard() {
                       <span key={i} className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-mono text-gray-500 shadow-sm">{h}</span>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400 mt-4 italic">Dica: O InstaDash funciona melhor com o arquivo "Meus Pedidos" ou "Relatório de Vendas".</p>
                 </CardContent>
               </Card>
             )}
@@ -260,7 +264,7 @@ export default function Dashboard() {
               <div className="text-5xl font-black text-[#EE4D2D] mb-2 tracking-tighter">
                 {formatCurrency(stats?.videoRevenue || 0)}
               </div>
-              <p className="text-sm font-medium text-gray-400">Vendas convertidas por vídeos</p>
+              <p className="text-sm font-medium text-gray-400">Vendas (Padrão)</p>
               <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#EE4D2D] rounded-full transition-all duration-1000" 
@@ -268,7 +272,7 @@ export default function Dashboard() {
                 ></div>
               </div>
               <p className="text-[10px] font-bold text-gray-300 mt-2 uppercase tracking-widest">
-                Representatividade: {stats && stats.totalRevenue > 0 ? ((stats.videoRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
+                Participação: {stats && stats.totalRevenue > 0 ? ((stats.videoRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
               </p>
             </CardContent>
           </Card>
@@ -284,7 +288,7 @@ export default function Dashboard() {
               <div className="text-5xl font-black text-blue-600 mb-2 tracking-tighter">
                 {formatCurrency(stats?.socialRevenue || 0)}
               </div>
-              <p className="text-sm font-medium text-gray-400">Links externos, Bio e Stories</p>
+              <p className="text-sm font-medium text-gray-400">Vendas com Sub ID</p>
               <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 rounded-full transition-all duration-1000" 
@@ -292,7 +296,7 @@ export default function Dashboard() {
                 ></div>
               </div>
               <p className="text-[10px] font-bold text-gray-300 mt-2 uppercase tracking-widest">
-                Representatividade: {stats && stats.totalRevenue > 0 ? ((stats.socialRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
+                Participação: {stats && stats.totalRevenue > 0 ? ((stats.socialRevenue / stats.totalRevenue) * 100).toFixed(1) : 0}%
               </p>
             </CardContent>
           </Card>
@@ -300,14 +304,14 @@ export default function Dashboard() {
 
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center md:text-left">
-            <h3 className="text-lg font-black text-gray-900">Análise de Canal</h3>
-            <p className="text-sm font-medium text-gray-500">Qual canal está trazendo faturamento agora?</p>
+            <h3 className="text-lg font-black text-gray-900">Análise Dinâmica</h3>
+            <p className="text-sm font-medium text-gray-500">Dados baseados no seu último upload.</p>
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto">
              <div className="relative flex-1 md:w-64">
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                <Input 
-                 placeholder="Buscar pedidos..." 
+                 placeholder="Buscar..." 
                  className="pl-10 rounded-xl border-gray-200 h-11"
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
@@ -315,7 +319,7 @@ export default function Dashboard() {
              </div>
              <Button variant="outline" className="h-11 rounded-xl font-bold px-6 border-gray-200">
                <Plus className="w-4 h-4 mr-2" />
-               Custo Manual
+               Custo
              </Button>
           </div>
         </div>
