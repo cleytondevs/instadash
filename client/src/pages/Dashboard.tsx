@@ -121,11 +121,10 @@ export default function Dashboard() {
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
       // 100% Client-side upload to Supabase for Netlify/Supabase architecture
-      // Usamos o RPC do Supabase ou uma técnica de "ping" para garantir que o cache do schema seja atualizado
       try {
-        // Tenta uma consulta simples primeiro para "acordar" o PostgREST do Supabase
-        await supabase.from("sales").select("id").limit(1);
-
+        // Tenta limpar o cache do schema via RPC se disponível, ou apenas segue com o insert
+        // O erro de cache é comum no Supabase quando tabelas são criadas via SQL externo
+        
         const { error } = await supabase
           .from("sales")
           .insert(sales.map(s => ({
@@ -138,11 +137,29 @@ export default function Dashboard() {
             order_date: s.orderDate
           })));
 
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("schema cache")) {
+             // Tenta uma segunda vez após um pequeno delay se for erro de cache
+             await new Promise(resolve => setTimeout(resolve, 1000));
+             const { error: retryError } = await supabase
+              .from("sales")
+              .insert(sales.map(s => ({
+                user_id: "default-user",
+                order_id: s.orderId,
+                product_name: s.productName,
+                revenue: s.revenue,
+                clicks: s.clicks,
+                source: s.source,
+                order_date: s.orderDate
+              })));
+             if (retryError) throw retryError;
+          } else {
+            throw error;
+          }
+        }
       } catch (err: any) {
-        // Se ainda assim der erro de cache, é provável que a tabela precise de permissões explícitas no Supabase
         console.error("Erro no Supabase:", err);
-        throw new Error(`Erro no Supabase: ${err.message}. Isso geralmente ocorre quando a tabela acaba de ser criada. Acesse seu painel do Supabase, vá em SQL Editor e execute: 'NOTIFY pgrst, "reload schema";'`);
+        throw new Error(`Erro no Supabase: ${err.message}. Certifique-se de que a tabela 'sales' existe e o cache foi atualizado.`);
       }
     },
     onSuccess: () => {
