@@ -29,13 +29,20 @@ export async function setupTables() {
     client = await pool.connect();
     
     await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
+      DROP TABLE IF EXISTS sales;
+      DROP TABLE IF EXISTS expenses;
+      DROP TABLE IF EXISTS users;
+
+      CREATE TABLE users (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        fb_app_id TEXT,
+        fb_app_secret TEXT,
+        fb_access_token TEXT
       );
 
-      CREATE TABLE IF NOT EXISTS sales (
+      CREATE TABLE sales (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id),
         order_id TEXT UNIQUE,
@@ -44,17 +51,17 @@ export async function setupTables() {
         clicks INTEGER DEFAULT 0,
         source TEXT,
         order_date DATE,
-        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS expenses (
+      CREATE TABLE expenses (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id),
         description TEXT NOT NULL,
         amount INTEGER NOT NULL,
         category TEXT,
         date DATE,
-        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
     console.log("Estrutura de dados validada com sucesso!");
