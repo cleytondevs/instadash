@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, date } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -12,35 +12,30 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
-export const ads = pgTable("ads", {
+export const sales = pgTable("sales", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(), // Linked to users.id manually for now
-  platformIdentifier: text("platform_identifier").notNull(), // ID do impulsionamento
-  name: text("name").notNull(),
-  platform: text("platform").notNull(), // 'shopee' or 'instagram'
-  status: text("status").notNull().default('active'), // 'active', 'paused'
+  userId: varchar("user_id").notNull(),
+  orderId: text("order_id").notNull().unique(),
+  orderDate: date("order_date").notNull(),
+  source: text("source").notNull(), // 'shopee_video' or 'social_media'
+  revenue: integer("revenue").notNull(), // In cents
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const reports = pgTable("reports", {
+export const expenses = pgTable("expenses", {
   id: serial("id").primaryKey(),
-  adId: integer("ad_id").notNull(),
-  date: timestamp("date").notNull().defaultNow(),
-  spend: integer("spend").notNull(), // In cents
-  revenue: integer("revenue").notNull(), // In cents
-  impressions: integer("impressions").default(0),
-  clicks: integer("clicks").default(0),
+  userId: varchar("user_id").notNull(),
+  date: date("date").notNull(),
+  amount: integer("amount").notNull(), // In cents
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // === RELATIONS ===
-export const adsRelations = relations(ads, ({ many }) => ({
-  reports: many(reports),
-}));
-
-export const reportsRelations = relations(reports, ({ one }) => ({
-  ad: one(ads, {
-    fields: [reports.adId],
-    references: [ads.id],
+export const salesRelations = relations(sales, ({ one }) => ({
+  user: one(users, {
+    fields: [sales.userId],
+    references: [users.id],
   }),
 }));
 
@@ -50,14 +45,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export const insertAdSchema = createInsertSchema(ads).omit({ 
+export const insertSaleSchema = createInsertSchema(sales).omit({ 
   id: true, 
   userId: true,
   createdAt: true 
 });
 
-export const insertReportSchema = createInsertSchema(reports).omit({ 
-  id: true 
+export const insertExpenseSchema = createInsertSchema(expenses).omit({ 
+  id: true, 
+  userId: true,
+  createdAt: true 
 });
 
 // === EXPLICIT API CONTRACT TYPES ===
@@ -65,15 +62,16 @@ export const insertReportSchema = createInsertSchema(reports).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type Ad = typeof ads.$inferSelect;
-export type InsertAd = z.infer<typeof insertAdSchema>;
-export type Report = typeof reports.$inferSelect;
+export type Sale = typeof sales.$inferSelect;
+export type InsertSale = z.infer<typeof insertSaleSchema>;
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 
-export type CreateAdRequest = InsertAd;
-export type UpdateAdRequest = Partial<InsertAd>;
-
-// Response types
-export type AdResponse = Ad & {
-  reports?: Report[];
-  roi?: number; // Calculated field
-};
+// Summary types for dashboard
+export interface DashboardStats {
+  totalRevenue: number;
+  videoRevenue: number;
+  socialRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+}

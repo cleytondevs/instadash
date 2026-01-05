@@ -1,11 +1,12 @@
 import { 
-  users, ads, reports,
+  users, sales, expenses,
   type User, type InsertUser,
-  type Ad, type InsertAd, type AdResponse,
-  type Report, type InsertAd as CreateAdRequest // Alias for consistency
+  type Sale, type InsertSale,
+  type Expense, type InsertExpense,
+  type DashboardStats
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, between, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -13,20 +14,20 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
-  // Ads
-  getAds(): Promise<AdResponse[]>;
-  getAd(id: number): Promise<AdResponse | undefined>;
-  createAd(ad: CreateAdRequest & { userId: string }): Promise<Ad>;
-  updateAd(id: number, updates: Partial<InsertAd>): Promise<Ad | undefined>;
-  deleteAd(id: number): Promise<void>;
+  // Sales
+  createSale(sale: InsertSale & { userId: string }): Promise<Sale>;
+  getSales(userId: string): Promise<Sale[]>;
+  bulkCreateSales(salesList: (InsertSale & { userId: string })[]): Promise<void>;
 
-  // Reports
-  createReport(report: any): Promise<Report>; // Typed as any to match schema insert loosely for internal use
-  getReportsForAd(adId: number): Promise<Report[]>;
+  // Expenses
+  createExpense(expense: InsertExpense & { userId: string }): Promise<Expense>;
+  getExpenses(userId: string): Promise<Expense[]>;
+
+  // Dashboard
+  getDashboardStats(userId: string): Promise<DashboardStats>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // User methods
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -42,72 +43,51 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Ad methods
-  async getAds(): Promise<AdResponse[]> {
-    const allAds = await db.select().from(ads);
-    // Fetch latest stats for each ad to calculate simple ROI overview if needed
-    // For now, just return the ads. Frontend might fetch details separately or we could join.
-    // Let's attach the latest report or summary if possible, but for MVP list, raw ads are fine.
-    // Actually, to show ROI on dashboard list, we might need aggregation. 
-    // Let's fetch all reports for calculation in memory (efficient enough for lite app)
-    
-    const results: AdResponse[] = [];
-    
-    for (const ad of allAds) {
-      const adReports = await db.select().from(reports).where(eq(reports.adId, ad.id));
-      const totalSpend = adReports.reduce((sum, r) => sum + r.spend, 0);
-      const totalRevenue = adReports.reduce((sum, r) => sum + r.revenue, 0);
-      const roi = totalSpend > 0 ? ((totalRevenue - totalSpend) / totalSpend) * 100 : 0;
-      
-      results.push({
-        ...ad,
-        reports: adReports,
-        roi
-      });
-    }
-    
-    return results;
+  async createSale(sale: InsertSale & { userId: string }): Promise<Sale> {
+    const [newSale] = await db.insert(sales).values(sale).returning();
+    return newSale;
   }
 
-  async getAd(id: number): Promise<AdResponse | undefined> {
-    const [ad] = await db.select().from(ads).where(eq(ads.id, id));
-    if (!ad) return undefined;
+  async getSales(userId: string): Promise<Sale[]> {
+    return db.select().from(sales).where(eq(sales.userId, userId));
+  }
 
-    const adReports = await db.select().from(reports).where(eq(reports.adId, id)).orderBy(desc(reports.date));
-    
-    const totalSpend = adReports.reduce((sum, r) => sum + r.spend, 0);
-    const totalRevenue = adReports.reduce((sum, r) => sum + r.revenue, 0);
-    const roi = totalSpend > 0 ? ((totalRevenue - totalSpend) / totalSpend) * 100 : 0;
+  async bulkCreateSales(salesList: (InsertSale & { userId: string })[]): Promise<void> {
+    if (salesList.length === 0) return;
+    await db.insert(sales).values(salesList).onConflictDoNothing({ target: sales.orderId });
+  }
+
+  async createExpense(expense: InsertExpense & { userId: string }): Promise<Expense> {
+    const [newExpense] = await db.insert(expenses).values(expense).returning();
+    return newExpense;
+  }
+
+  async getExpenses(userId: string): Promise<Expense[]> {
+    return db.select().from(expenses).where(eq(expenses.userId, userId));
+  }
+
+  async getDashboardStats(userId: string): Promise<DashboardStats> {
+    const userSales = await this.getSales(userId);
+    const userExpenses = await this.getExpenses(userId);
+
+    const videoRevenue = userSales
+      .filter(s => s.source === 'shopee_video')
+      .reduce((sum, s) => sum + s.revenue, 0);
+
+    const socialRevenue = userSales
+      .filter(s => s.source === 'social_media')
+      .reduce((sum, s) => sum + s.revenue, 0);
+
+    const totalRevenue = videoRevenue + socialRevenue;
+    const totalExpenses = userExpenses.reduce((sum, e) => sum + e.amount, 0);
 
     return {
-      ...ad,
-      reports: adReports,
-      roi
+      totalRevenue,
+      videoRevenue,
+      socialRevenue,
+      totalExpenses,
+      netProfit: totalRevenue - totalExpenses
     };
-  }
-
-  async createAd(ad: CreateAdRequest & { userId: string }): Promise<Ad> {
-    const [newAd] = await db.insert(ads).values(ad).returning();
-    return newAd;
-  }
-
-  async updateAd(id: number, updates: Partial<InsertAd>): Promise<Ad | undefined> {
-    const [updated] = await db.update(ads).set(updates).where(eq(ads.id, id)).returning();
-    return updated;
-  }
-
-  async deleteAd(id: number): Promise<void> {
-    await db.delete(ads).where(eq(ads.id, id));
-  }
-
-  // Report methods
-  async createReport(report: any): Promise<Report> {
-    const [newReport] = await db.insert(reports).values(report).returning();
-    return newReport;
-  }
-
-  async getReportsForAd(adId: number): Promise<Report[]> {
-    return db.select().from(reports).where(eq(reports.adId, adId)).orderBy(desc(reports.date));
   }
 }
 
