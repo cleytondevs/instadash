@@ -106,7 +106,23 @@ export default function Dashboard() {
         const totalRevenue = videoRevenue + socialRevenue;
         const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
         
-        return {
+        const productCounts: Record<string, number> = {};
+        (salesData || []).forEach((sale: any) => {
+          if (sale.product_name) {
+            productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
+          }
+        });
+
+        let topProduct = null;
+        let maxOrders = 0;
+        for (const [name, count] of Object.entries(productCounts)) {
+          if (count > maxOrders) {
+            maxOrders = count;
+            topProduct = { name, orders: count };
+          }
+        }
+
+        const stats = {
           totalRevenue,
           videoRevenue,
           socialRevenue,
@@ -117,8 +133,10 @@ export default function Dashboard() {
           socialClicks: (salesData || [])
             .filter((s: any) => s.source === 'social_media')
             .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
-          topProduct: null
+          topProduct
         };
+        
+        return stats;
       } catch (err) {
         console.error("Erro crítico na Dashboard:", err);
         throw err;
