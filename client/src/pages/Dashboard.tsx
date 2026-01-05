@@ -122,7 +122,10 @@ export default function Dashboard() {
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
       // Deletar existentes para o usuário padrão (como no backend)
-      await supabase.from("sales").delete().eq("user_id", "default-user");
+      const { error: deleteError } = await supabase.from("sales").delete().eq("user_id", "default-user");
+      if (deleteError) {
+        console.error("Erro ao deletar vendas antigas:", deleteError);
+      }
       
       const formattedSales = sales.map(s => ({
         user_id: "default-user",
@@ -134,8 +137,11 @@ export default function Dashboard() {
         clicks: s.clicks
       }));
 
-      const { error } = await supabase.from("sales").insert(formattedSales);
-      if (error) throw error;
+      const { error: insertError } = await supabase.from("sales").insert(formattedSales);
+      if (insertError) {
+        console.error("Erro detalhado do Supabase:", insertError);
+        throw new Error(`Erro Supabase: ${insertError.message} (Código: ${insertError.code})`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
