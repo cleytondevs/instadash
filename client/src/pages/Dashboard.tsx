@@ -120,20 +120,17 @@ export default function Dashboard() {
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
-      // Using Supabase directly for a Netlify (Front) + Supabase (Back) architecture
-      const { error } = await supabase
-        .from("sales")
-        .insert(sales.map(s => ({
-          user_id: "default-user",
-          order_id: s.orderId,
-          product_name: s.productName,
-          revenue: s.revenue,
-          clicks: s.clicks,
-          source: s.source,
-          order_date: s.orderDate
-        })));
+      // Usando o backend do Replit como proxy para evitar erros de cache de schema do Supabase (PostgREST)
+      const response = await fetch("/api/sales/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sales),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao salvar dados no servidor");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
