@@ -58,7 +58,7 @@ export default function Dashboard() {
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
   const [isConnectingFb, setIsConnectingFb] = useState(false);
 
-  const [timeFilter, setTimeFilter] = useState<"today" | "weekly" | "monthly" | "all">("all");
+  const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("weekly");
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
@@ -71,6 +71,11 @@ export default function Dashboard() {
         if (timeFilter === "today") {
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
           query = query.gte("order_date", today);
+        } else if (timeFilter === "yesterday") {
+          const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          query = query.eq("order_date", yesterdayStr);
         } else if (timeFilter === "weekly") {
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -527,6 +532,14 @@ export default function Dashboard() {
               Hoje
             </Button>
             <Button 
+              variant={timeFilter === "yesterday" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setTimeFilter("yesterday")}
+              className="rounded-lg whitespace-nowrap"
+            >
+              Ontem
+            </Button>
+            <Button 
               variant={timeFilter === "weekly" ? "default" : "ghost"} 
               size="sm" 
               onClick={() => setTimeFilter("weekly")}
@@ -541,14 +554,6 @@ export default function Dashboard() {
               className="rounded-lg whitespace-nowrap"
             >
               Mensal
-            </Button>
-            <Button 
-              variant={timeFilter === "all" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setTimeFilter("all")}
-              className="rounded-lg whitespace-nowrap"
-            >
-              Tudo
             </Button>
           </div>
 
