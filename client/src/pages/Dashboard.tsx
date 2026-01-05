@@ -58,24 +58,27 @@ export default function Dashboard() {
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
   const [isConnectingFb, setIsConnectingFb] = useState(false);
 
+  const [timeFilter, setTimeFilter] = useState<"all" | "weekly" | "monthly">("all");
+  const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
+
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", timeFilter],
     queryFn: async () => {
-      // Prioritizing direct Supabase fetch for Netlify (Front) + Supabase (Back) setup
       try {
-        console.log("Iniciando busca de dados no Supabase...");
+        let query = supabase.from("sales").select("*");
         
-        // Tentativa de "ping" para garantir que a tabela seja resolvida
-        const ping = await supabase.from("sales").select("id").limit(1);
-        if (ping.error) console.warn("Aviso no ping inicial:", ping.error);
+        if (timeFilter === "weekly") {
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          query = query.gte("order_date", oneWeekAgo.toISOString());
+        } else if (timeFilter === "monthly") {
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          query = query.gte("order_date", oneMonthAgo.toISOString());
+        }
 
-        const { data: salesData, error: salesError } = await supabase
-          .from("sales")
-          .select("*");
-
-        const { data: expensesData, error: expensesError } = await supabase
-          .from("expenses")
-          .select("*");
+        const { data: salesData, error: salesError } = await query;
+        const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*");
 
         if (salesError || expensesError) {
           console.error("Erro na busca de dados (Supabase):", salesError || expensesError);
@@ -146,22 +149,8 @@ export default function Dashboard() {
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
-      // 100% Client-side upload to Supabase for Netlify/Supabase architecture
       try {
-        console.log("Iniciando upload para o Supabase (Reset + Upsert)...");
-        
-        // Deletar dados antigos antes de inserir os novos (Reset)
-        const { error: deleteError } = await supabase
-          .from("sales")
-          .delete()
-          .neq("id", -1); // Deleta tudo (id nunca será -1)
-
-        if (deleteError) {
-          console.error("Erro ao resetar dados (Supabase):", deleteError);
-          throw deleteError;
-        }
-
-        // Usamos upsert para inserir os novos dados
+        const batchId = `upload_${Date.now()}`;
         const { error: insertError } = await supabase
           .from("sales")
           .upsert(
@@ -172,19 +161,14 @@ export default function Dashboard() {
               revenue: s.revenue,
               clicks: s.clicks,
               source: s.source,
-              order_date: s.orderDate
+              order_date: s.orderDate,
+              batch_id: batchId
             })),
             { onConflict: 'order_id' }
           );
 
-        if (insertError) {
-          console.error("Erro no upload do Supabase:", insertError);
-          throw insertError;
-        }
-        
-        console.log("Upload e reset concluídos com sucesso.");
+        if (insertError) throw insertError;
       } catch (err: any) {
-        console.error("Erro crítico no upload:", err);
         throw new Error(`Erro: ${err.message}`);
       }
     },

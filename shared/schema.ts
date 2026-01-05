@@ -24,6 +24,8 @@ export const sales = pgTable("sales", {
   source: text("source").notNull(), // 'shopee_video' or 'social_media'
   revenue: integer("revenue").notNull(), // In cents
   clicks: integer("clicks").default(0),
+  batchId: text("batch_id"), // Identificador único do upload
+  uploadDate: timestamp("upload_date").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -53,7 +55,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertSaleSchema = createInsertSchema(sales).omit({ 
   id: true, 
   userId: true,
-  createdAt: true 
+  createdAt: true,
+  uploadDate: true
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ 
