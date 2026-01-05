@@ -359,27 +359,57 @@ export default function Dashboard() {
     }
 
     setIsFetchingAds(true);
+    
+    // Obter data de ontem para o relatório
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dateStr = yesterday.toISOString().split('T')[0];
+
     (window as any).FB.api(
       '/me/adaccounts',
       'GET',
-      { fields: 'id,name,amount_spent,account_id' },
+      { fields: 'id,name,account_id' },
       (response: any) => {
         if (response && !response.error) {
-          const totalSpent = response.data.reduce((sum: number, acc: any) => sum + (parseFloat(acc.amount_spent) || 0), 0);
-          setFbAdSpend(Math.floor(totalSpent * 100)); // Convert to cents
-          toast({
-            title: "Relatório Atualizado",
-            description: `Gastos de anúncios carregados: ${formatCurrency(Math.floor(totalSpent * 100))}`,
+          // Para cada conta, buscar os insights de ontem
+          const accountPromises = response.data.map((acc: any) => {
+            return new Promise((resolve) => {
+              (window as any).FB.api(
+                `/${acc.id}/insights`,
+                'GET',
+                { 
+                  time_range: JSON.stringify({ since: dateStr, until: dateStr }),
+                  fields: 'spend'
+                },
+                (insights: any) => {
+                  if (insights && !insights.error && insights.data.length > 0) {
+                    resolve(parseFloat(insights.data[0].spend) || 0);
+                  } else {
+                    resolve(0);
+                  }
+                }
+              );
+            });
+          });
+
+          Promise.all(accountPromises).then((results: any) => {
+            const totalSpent = results.reduce((sum: number, val: number) => sum + val, 0);
+            setFbAdSpend(Math.floor(totalSpent * 100)); // Convert to cents
+            toast({
+              title: "Relatório Atualizado",
+              description: `Gastos de ontem carregados: ${formatCurrency(Math.floor(totalSpent * 100))}`,
+            });
+            setIsFetchingAds(false);
           });
         } else {
-          console.error("Erro ao buscar gastos:", response.error);
+          console.error("Erro ao buscar contas:", response.error);
           toast({
             variant: "destructive",
             title: "Erro na API",
-            description: response.error?.message || "Não foi possível buscar os gastos.",
+            description: response.error?.message || "Não foi possível buscar as contas.",
           });
+          setIsFetchingAds(false);
         }
-        setIsFetchingAds(false);
       }
     );
   };
