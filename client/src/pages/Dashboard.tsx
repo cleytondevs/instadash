@@ -10,7 +10,8 @@ import {
   Video,
   Share2,
   Plus,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [debugHeaders, setDebugHeaders] = useState<string[]>([]);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
@@ -37,6 +39,7 @@ export default function Dashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       setLastError(null);
+      setDebugHeaders([]);
       toast({
         title: "Sucesso!",
         description: "Planilha processada e vendas importadas.",
@@ -57,41 +60,44 @@ export default function Dashboard() {
     if (!file) return;
 
     setLastError(null);
+    setDebugHeaders([]);
     setIsUploading(true);
     
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      encoding: "ISO-8859-1", // Shopee costuma usar esse encoding em CSVs brasileiros
+      encoding: "ISO-8859-1",
       complete: (results) => {
         setIsUploading(false);
-        console.log("CSV Headers found:", results.meta.fields);
+        const headers = results.meta.fields || [];
+        setDebugHeaders(headers);
+        console.log("CSV Headers found:", headers);
         
         if (results.data.length === 0) {
           setLastError("A planilha parece estar vazia.");
           return;
         }
 
-        const sales: any[] = results.data.map((row: any, index) => {
-          // Normalização de chaves para lidar com espaços e encodings
+        const sales: any[] = results.data.map((row: any) => {
           const getVal = (possibleKeys: string[]) => {
             for (const key of possibleKeys) {
-              if (row[key] !== undefined) return row[key];
-              // Tenta encontrar a chave ignorando espaços e case
-              const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+              const cleanKey = key.toLowerCase().trim();
+              const foundKey = Object.keys(row).find(k => {
+                const kClean = k.toLowerCase().trim();
+                return kClean === cleanKey || kClean.includes(cleanKey);
+              });
               if (foundKey) return row[foundKey];
             }
             return null;
           };
 
-          const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido"]);
-          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido"]);
-          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte"]);
-          const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido"]);
+          const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência"]);
+          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço"]);
+          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte", "Tipo"]);
+          const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data"]);
 
           if (!orderId) return null;
 
-          // Limpeza do valor monetário (remove R$, espaços, converte vírgula em ponto)
           let revenueCents = 0;
           if (rawRevenue) {
             const cleanRevenue = String(rawRevenue).replace(/[R$\s]/g, "").replace(",", ".");
@@ -103,7 +109,7 @@ export default function Dashboard() {
             : "social_media";
           
           return {
-            orderId: String(orderId),
+            orderId: String(orderId).trim(),
             orderDate: rawDate || new Date().toISOString(),
             revenue: isNaN(revenueCents) ? 0 : revenueCents,
             source: source,
@@ -111,7 +117,7 @@ export default function Dashboard() {
         }).filter(s => s !== null && s.orderId && s.revenue > 0);
 
         if (sales.length === 0) {
-          setLastError("Não conseguimos identificar os dados de vendas. Verifique se as colunas (ID do Pedido, Receita Total) existem.");
+          setLastError("Não conseguimos identificar os dados de vendas. Abaixo estão as colunas que encontramos na sua planilha. Verifique se o arquivo é o 'Relatório de Vendas' da Shopee.");
           return;
         }
 
@@ -123,7 +129,6 @@ export default function Dashboard() {
       }
     });
     
-    // Reset input so the same file can be uploaded again if needed
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -168,11 +173,31 @@ export default function Dashboard() {
 
       <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
         {lastError && (
-          <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro no Processamento</AlertTitle>
-            <AlertDescription>{lastError}</AlertDescription>
-          </Alert>
+          <div className="space-y-4">
+            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro no Processamento</AlertTitle>
+              <AlertDescription>{lastError}</AlertDescription>
+            </Alert>
+            
+            {debugHeaders.length > 0 && (
+              <Card className="border-dashed border-2">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Colunas detectadas na sua planilha:
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="py-3">
+                  <div className="flex flex-wrap gap-2">
+                    {debugHeaders.map((h, i) => (
+                      <span key={i} className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">{h}</span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
 
         {/* Métricas Principais */}
