@@ -63,6 +63,9 @@ export async function setupTables() {
         date DATE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      
+      -- Forçar atualização do cache do PostgREST (Supabase)
+      NOTIFY pgrst, 'reload schema';
     `);
     console.log("Estrutura de dados validada com sucesso!");
   } catch (error: any) {
