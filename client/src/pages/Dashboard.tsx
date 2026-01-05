@@ -508,7 +508,9 @@ export default function Dashboard() {
                       <AlertCircle className="w-3 h-3 flex-shrink-0" /> Configuração Obrigatória no Painel Meta:
                     </p>
                     <ul className="list-disc pl-4 space-y-1">
-                      <li className="break-all"><strong>Domínio:</strong> instadashshopee.netlify.app</li>
+                      <li className="break-all"><strong>URL do Site:</strong> https://instadashshopee.netlify.app</li>
+                      <li className="break-all"><strong>Redirecionamento OAuth:</strong> https://instadashshopee.netlify.app/</li>
+                      <li className="break-all"><strong>JavaScript SDK:</strong> https://instadashshopee.netlify.app/</li>
                       <li className="break-all"><strong>Privacidade:</strong> https://instadashshopee.netlify.app/privacy</li>
                       <li className="break-all"><strong>Termos:</strong> https://instadashshopee.netlify.app/terms</li>
                       <li className="break-all"><strong>Exclusão de Dados:</strong> https://instadashshopee.netlify.app/data-deletion</li>
