@@ -510,6 +510,7 @@ export default function Dashboard() {
                       <li className="break-all"><strong>Domínio:</strong> instadashshopee.netlify.app</li>
                       <li className="break-all"><strong>Privacidade:</strong> https://instadashshopee.netlify.app/privacy</li>
                       <li className="break-all"><strong>Termos:</strong> https://instadashshopee.netlify.app/terms</li>
+                      <li className="break-all"><strong>Exclusão de Dados:</strong> https://instadashshopee.netlify.app/data-deletion</li>
                     </ul>
                   </div>
                   <div className="grid gap-2">
