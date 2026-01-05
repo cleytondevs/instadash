@@ -130,26 +130,33 @@ export default function Dashboard() {
     mutationFn: async (sales: any[]) => {
       // 100% Client-side upload to Supabase for Netlify/Supabase architecture
       try {
-        // Ping inicial para "acordar" o Supabase se necessário
-        await supabase.from("sales").select("id").limit(1);
-
+        console.log("Iniciando upload para o Supabase (Upsert)...");
+        
+        // Usamos upsert para evitar erro 409 (conflito) caso o pedido já exista
         const { error } = await supabase
           .from("sales")
-          .insert(sales.map(s => ({
-            user_id: "default-user",
-            order_id: s.orderId,
-            product_name: s.productName,
-            revenue: s.revenue,
-            clicks: s.clicks,
-            source: s.source,
-            order_date: s.orderDate
-          })));
+          .upsert(
+            sales.map(s => ({
+              user_id: "default-user",
+              order_id: s.orderId,
+              product_name: s.productName,
+              revenue: s.revenue,
+              clicks: s.clicks,
+              source: s.source,
+              order_date: s.orderDate
+            })),
+            { onConflict: 'order_id' }
+          );
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erro no upsert do Supabase:", error);
+          throw error;
+        }
+        
+        console.log("Upload concluído com sucesso.");
       } catch (err: any) {
-        console.error("Erro no Supabase:", err);
-        // Se ainda der erro de cache, sugerimos o comando de atualização
-        throw new Error(`Erro no Supabase: ${err.message}. Tente recarregar a página. Se o erro persistir, o cache do Supabase precisa ser limpo.`);
+        console.error("Erro crítico no upload:", err);
+        throw new Error(`Erro: ${err.message}. Certifique-se de que a coluna 'order_id' é única no seu banco.`);
       }
     },
     onSuccess: () => {
