@@ -121,26 +121,17 @@ export default function Dashboard() {
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
-      // Deletar existentes para o usuário padrão (como no backend)
-      const { error: deleteError } = await supabase.from("sales").delete().eq("user_id", "default-user");
-      if (deleteError) {
-        console.error("Erro ao deletar vendas antigas:", deleteError);
-      }
-      
-      const formattedSales = sales.map(s => ({
-        user_id: "default-user",
-        order_id: s.orderId,
-        product_name: s.productName,
-        order_date: s.orderDate,
-        source: s.source,
-        revenue: s.revenue,
-        clicks: s.clicks
-      }));
+      // Enviar para o backend ao invés de usar o cliente Supabase diretamente
+      // Isso resolve problemas de cache de schema do PostgREST (Supabase)
+      const response = await fetch("/api/sales/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sales),
+      });
 
-      const { error: insertError } = await supabase.from("sales").insert(formattedSales);
-      if (insertError) {
-        console.error("Erro detalhado do Supabase:", insertError);
-        throw new Error(`Erro Supabase: ${insertError.message} (Código: ${insertError.code})`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao salvar dados no servidor");
       }
     },
     onSuccess: () => {
@@ -151,14 +142,16 @@ export default function Dashboard() {
         title: "Sucesso!",
         description: "Planilha processada e vendas importadas. Dados antigos foram substituídos.",
       });
+      setIsUploading(false);
     },
     onError: (error: any) => {
-      setLastError(`Erro ao enviar dados para o Supabase: ${error.message}`);
+      setLastError(`Erro ao enviar dados: ${error.message}`);
       toast({
         variant: "destructive",
-        title: "Erro no Supabase",
+        title: "Erro no Upload",
         description: error.message,
       });
+      setIsUploading(false);
     },
   });
 
