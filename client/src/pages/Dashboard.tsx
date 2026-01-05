@@ -103,6 +103,7 @@ export default function Dashboard() {
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product"]);
           const rawClicks = getVal(["Cliques", "Clicks", "Número de cliques", "Visualizações de página"]);
+          const rawStatus = getVal(["Status do pedido", "Order Status", "Status", "Situação"]);
 
           if (!orderId) return null;
 
@@ -113,8 +114,10 @@ export default function Dashboard() {
           }
 
           const hasSubId = !!getVal(["Sub ID", "Sub-ID"]);
+          const isPending = String(rawStatus || "").toLowerCase().includes("pendente") || String(rawStatus || "").toLowerCase().includes("pending");
           
-          const source = hasSubId 
+          // Lógica: Se for PENDENTE ou tiver Sub ID -> Redes Sociais. Caso contrário -> Shopee Video.
+          const source = (hasSubId || isPending) 
             ? "social_media" 
             : "shopee_video";
           
@@ -409,7 +412,7 @@ export default function Dashboard() {
               <div className="text-5xl font-black text-blue-600 mb-2 tracking-tighter">
                 {formatCurrency(stats?.socialRevenue || 0)}
               </div>
-              <p className="text-sm font-medium text-gray-400">Vendas com Sub ID</p>
+              <p className="text-sm font-medium text-gray-400">Vendas com Sub ID ou Pendentes</p>
               <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 rounded-full transition-all duration-1000" 
