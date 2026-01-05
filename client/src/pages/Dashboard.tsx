@@ -9,19 +9,22 @@ import {
   DollarSign,
   Video,
   Share2,
-  Plus
+  Plus,
+  AlertCircle
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Papa from "papaparse";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
@@ -33,16 +36,18 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      setLastError(null);
       toast({
         title: "Sucesso!",
         description: "Planilha processada e vendas importadas.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      setLastError("Erro ao enviar dados para o servidor. Verifique se o formato da planilha está correto.");
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Falha ao processar a planilha. Verifique o formato.",
+        description: "Falha ao importar dados.",
       });
     },
   });
@@ -51,38 +56,75 @@ export default function Dashboard() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setLastError(null);
     setIsUploading(true);
+    
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      encoding: "ISO-8859-1", // Shopee costuma usar esse encoding em CSVs brasileiros
       complete: (results) => {
-        const sales: any[] = results.data.map((row: any) => {
-          // Lógica simplificada de detecção de fonte baseada em colunas comuns da Shopee
-          // Isso deve ser ajustado conforme o CSV real
-          const source = row["Origem"]?.toLowerCase().includes("video") || row["Shopee Video"] 
+        setIsUploading(false);
+        console.log("CSV Headers found:", results.meta.fields);
+        
+        if (results.data.length === 0) {
+          setLastError("A planilha parece estar vazia.");
+          return;
+        }
+
+        const sales: any[] = results.data.map((row: any, index) => {
+          // Normalização de chaves para lidar com espaços e encodings
+          const getVal = (possibleKeys: string[]) => {
+            for (const key of possibleKeys) {
+              if (row[key] !== undefined) return row[key];
+              // Tenta encontrar a chave ignorando espaços e case
+              const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+              if (foundKey) return row[foundKey];
+            }
+            return null;
+          };
+
+          const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido"]);
+          const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido"]);
+          const rawSource = getVal(["Origem", "Shopee Video", "Canal de Venda", "Informação da fonte"]);
+          const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido"]);
+
+          if (!orderId) return null;
+
+          // Limpeza do valor monetário (remove R$, espaços, converte vírgula em ponto)
+          let revenueCents = 0;
+          if (rawRevenue) {
+            const cleanRevenue = String(rawRevenue).replace(/[R$\s]/g, "").replace(",", ".");
+            revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
+          }
+
+          const source = String(rawSource || "").toLowerCase().includes("video") 
             ? "shopee_video" 
             : "social_media";
           
           return {
-            orderId: row["ID do Pedido"] || row["Order ID"],
-            orderDate: row["Data do Pedido"] || row["Order Creation Date"] || new Date().toISOString(),
-            revenue: Math.floor(parseFloat(row["Receita Total"] || row["Total Revenue"] || "0") * 100),
+            orderId: String(orderId),
+            orderDate: rawDate || new Date().toISOString(),
+            revenue: isNaN(revenueCents) ? 0 : revenueCents,
             source: source,
           };
-        }).filter(s => s.orderId && s.revenue > 0);
+        }).filter(s => s !== null && s.orderId && s.revenue > 0);
+
+        if (sales.length === 0) {
+          setLastError("Não conseguimos identificar os dados de vendas. Verifique se as colunas (ID do Pedido, Receita Total) existem.");
+          return;
+        }
 
         uploadMutation.mutate(sales);
-        setIsUploading(false);
       },
-      error: () => {
+      error: (error) => {
         setIsUploading(false);
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Erro ao ler o arquivo CSV.",
-        });
+        setLastError(`Erro ao ler o arquivo: ${error.message}`);
       }
     });
+    
+    // Reset input so the same file can be uploaded again if needed
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const formatCurrency = (cents: number) => {
@@ -114,17 +156,25 @@ export default function Dashboard() {
             />
             <Button 
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
+              disabled={isUploading || uploadMutation.isPending}
               className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2"
             >
               <Upload className="w-4 h-4" />
-              {isUploading ? "Processando..." : "Subir Planilha Shopee"}
+              {isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha Shopee"}
             </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+        {lastError && (
+          <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro no Processamento</AlertTitle>
+            <AlertDescription>{lastError}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Métricas Principais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden">
@@ -181,7 +231,7 @@ export default function Dashboard() {
               <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-orange-500" 
-                  style={{ width: `${stats ? (stats.videoRevenue / (stats.totalRevenue || 1)) * 100 : 0}%` }}
+                  style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.videoRevenue / stats.totalRevenue) * 100 : 0}%` }}
                 ></div>
               </div>
             </CardContent>
@@ -200,7 +250,7 @@ export default function Dashboard() {
               <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-600" 
-                  style={{ width: `${stats ? (stats.socialRevenue / (stats.totalRevenue || 1)) * 100 : 0}%` }}
+                  style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.socialRevenue / stats.totalRevenue) * 100 : 0}%` }}
                 ></div>
               </div>
             </CardContent>
