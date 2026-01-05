@@ -599,6 +599,14 @@ export default function Dashboard() {
           </Card>
         )}
       </main>
+
+      <footer className="max-w-6xl mx-auto px-6 py-8 border-t border-gray-200 text-center space-y-4">
+        <div className="flex items-center justify-center space-x-6 text-sm font-medium text-gray-500">
+          <a href="/terms" className="hover:text-[#EE4D2D] transition-colors">Termos de Serviço</a>
+          <a href="/privacy" className="hover:text-[#EE4D2D] transition-colors">Política de Privacidade</a>
+        </div>
+        <p className="text-xs text-gray-400">© 2026 InstaDash. Todos os direitos reservados.</p>
+      </footer>
     </div>
   );
 }
