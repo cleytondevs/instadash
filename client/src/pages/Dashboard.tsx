@@ -61,61 +61,9 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { data: salesData, error: salesError } = await supabase
-        .from("sales")
-        .select("*")
-        .eq("user_id", "default-user");
-
-      const { data: expensesData, error: expensesError } = await supabase
-        .from("expenses")
-        .select("*")
-        .eq("user_id", "default-user");
-
-      if (salesError || expensesError) throw salesError || expensesError;
-
-      const videoRevenue = (salesData || [])
-        .filter((s: any) => s.source === 'shopee_video')
-        .reduce((sum: number, s: any) => sum + s.revenue, 0);
-
-      const socialRevenue = (salesData || [])
-        .filter((s: any) => s.source === 'social_media')
-        .reduce((sum: number, s: any) => sum + s.revenue, 0);
-
-      const totalRevenue = videoRevenue + socialRevenue;
-      const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + e.amount, 0);
-      const totalOrders = (salesData || []).length;
-      const totalClicks = (salesData || []).reduce((sum: number, s: any) => sum + (s.clicks || 0), 0);
-      const socialClicks = (salesData || [])
-        .filter((s: any) => s.source === 'social_media')
-        .reduce((sum: number, s: any) => sum + (s.clicks || 0), 0);
-
-      const productCounts: Record<string, number> = {};
-      (salesData || []).forEach((sale: any) => {
-        if (sale.product_name) {
-          productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
-        }
-      });
-
-      let topProduct = null;
-      let maxOrders = 0;
-      for (const [name, count] of Object.entries(productCounts)) {
-        if (count > maxOrders) {
-          maxOrders = count;
-          topProduct = { name, orders: count };
-        }
-      }
-
-      return {
-        totalRevenue,
-        videoRevenue,
-        socialRevenue,
-        totalExpenses,
-        netProfit: totalRevenue - totalExpenses,
-        totalOrders,
-        totalClicks,
-        socialClicks,
-        topProduct
-      };
+      const response = await fetch("/api/stats");
+      if (!response.ok) throw new Error("Falha ao carregar estatísticas");
+      return response.json();
     }
   });
 
