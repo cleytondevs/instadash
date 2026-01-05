@@ -61,10 +61,22 @@ export async function setupTables() {
       );
       
       -- Garantir que as tabelas sejam expostas no schema public para a API
-      ALTER TABLE users OWNER TO postgres;
-      ALTER TABLE sales OWNER TO postgres;
-      ALTER TABLE expenses OWNER TO postgres;
+      GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres;
+      GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres;
       
+      -- Tentar conceder permissões para roles do Supabase se existirem
+      DO $$ 
+      BEGIN 
+        IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN
+          GRANT ALL ON ALL TABLES IN SCHEMA public TO anon;
+          GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon;
+        END IF;
+        IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN
+          GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+          GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+        END IF;
+      END $$;
+
       -- Forçar atualização do cache do PostgREST (Supabase)
       NOTIFY pgrst, 'reload schema';
     `);

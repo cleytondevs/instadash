@@ -67,7 +67,13 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (salesList.length === 0) return;
-    await db.insert(sales).values(salesList).onConflictDoNothing({ target: sales.orderId });
+    
+    // Chunking to avoid parameter limits and ensure better compatibility
+    const chunkSize = 100;
+    for (let i = 0; i < salesList.length; i += chunkSize) {
+      const chunk = salesList.slice(i, i + chunkSize);
+      await db.insert(sales).values(chunk).onConflictDoNothing({ target: sales.orderId });
+    }
   }
 
   async createExpense(expense: InsertExpense & { userId: string }): Promise<Expense> {
