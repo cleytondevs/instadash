@@ -123,8 +123,9 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
-          // Lógica: Se tiver Sub ID -> Shopee Video. Caso contrário -> Redes Sociais.
-          const source = subId ? "shopee_video" : "social_media";
+          // Lógica: Se tiver Sub ID OU estiver Pendente -> Shopee Video. Caso contrário -> Redes Sociais.
+          const isPending = String(rawStatus || "").toLowerCase().includes("pendente") || String(rawStatus || "").toLowerCase().includes("pending");
+          const source = (subId || isPending) ? "shopee_video" : "social_media";
           
           return {
             orderId: String(orderId).trim(),
