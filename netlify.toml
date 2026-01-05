@@ -4,7 +4,7 @@
 # no painel do Netlify apontando para a URL do seu Replit.
 
 [build]
-  publish = "dist"
+  publish = "dist/public"
   command = "npm run build"
 
 [[redirects]]
