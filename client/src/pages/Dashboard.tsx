@@ -112,7 +112,7 @@ export default function Dashboard() {
           const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount", "Total"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product"]);
-          const rawClicks = getVal(["Cliques", "Clicks", "Número de cliques", "Visualizações de página"]);
+          const rawClicks = getVal(["Cliques", "Clicks", "Número de cliques", "Visualizações de página", "Cliques no produto"]);
           const rawStatus = getVal(["Status do pedido", "Order Status", "Status", "Situação"]);
 
           if (!orderId) return null;
