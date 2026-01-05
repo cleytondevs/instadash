@@ -148,10 +148,21 @@ export default function Dashboard() {
     mutationFn: async (sales: any[]) => {
       // 100% Client-side upload to Supabase for Netlify/Supabase architecture
       try {
-        console.log("Iniciando upload para o Supabase (Upsert)...");
+        console.log("Iniciando upload para o Supabase (Reset + Upsert)...");
         
-        // Usamos upsert para evitar erro 409 (conflito) caso o pedido já exista
-        const { error } = await supabase
+        // Deletar dados antigos antes de inserir os novos (Reset)
+        const { error: deleteError } = await supabase
+          .from("sales")
+          .delete()
+          .neq("id", -1); // Deleta tudo (id nunca será -1)
+
+        if (deleteError) {
+          console.error("Erro ao resetar dados (Supabase):", deleteError);
+          throw deleteError;
+        }
+
+        // Usamos upsert para inserir os novos dados
+        const { error: insertError } = await supabase
           .from("sales")
           .upsert(
             sales.map(s => ({
@@ -166,15 +177,15 @@ export default function Dashboard() {
             { onConflict: 'order_id' }
           );
 
-        if (error) {
-          console.error("Erro no upsert do Supabase:", error);
-          throw error;
+        if (insertError) {
+          console.error("Erro no upload do Supabase:", insertError);
+          throw insertError;
         }
         
-        console.log("Upload concluído com sucesso.");
+        console.log("Upload e reset concluídos com sucesso.");
       } catch (err: any) {
         console.error("Erro crítico no upload:", err);
-        throw new Error(`Erro: ${err.message}. Certifique-se de que a coluna 'order_id' é única no seu banco.`);
+        throw new Error(`Erro: ${err.message}`);
       }
     },
     onSuccess: () => {

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import type { InsertAd } from "@shared/schema";
+import type { Sale } from "@shared/schema";
 
 export function useAds() {
   return useQuery({
@@ -40,7 +40,7 @@ export function useCreateAd() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (ad: InsertAd) => {
+    mutationFn: async (ad: any) => {
       const { data, error } = await supabase
         .from("ads")
         .insert([ad])
