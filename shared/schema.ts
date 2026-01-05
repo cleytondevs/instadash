@@ -10,6 +10,9 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  fbAppId: text("fb_app_id"),
+  fbAppSecret: text("fb_app_secret"),
+  fbAccessToken: text("fb_access_token"),
 });
 
 export const sales = pgTable("sales", {

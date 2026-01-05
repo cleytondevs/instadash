@@ -17,7 +17,9 @@ import {
   ShoppingCart,
   MousePointer2,
   Sparkles,
-  Package
+  Package,
+  Settings,
+  Facebook
 } from "lucide-react";
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -44,6 +55,7 @@ export default function Dashboard() {
   const [debugHeaders, setDebugHeaders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [localProducts, setLocalProducts] = useState<any[]>([]);
+  const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
@@ -182,6 +194,52 @@ export default function Dashboard() {
             <h1 className="text-xl font-bold text-gray-900">InstaDash <span className="text-[#EE4D2D] font-normal">Shopee</span></h1>
           </div>
           <div className="flex items-center space-x-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2 font-bold border-gray-200">
+                  <Settings className="w-4 h-4" />
+                  Configurar Meta
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Facebook className="w-5 h-5 text-blue-600" />
+                    Configuração Meta Ads
+                  </DialogTitle>
+                  <DialogDescription>
+                    Insira as chaves do seu aplicativo do Facebook para integrar os anúncios do Instagram.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="appId" className="text-sm font-bold">App ID</label>
+                    <Input 
+                      id="appId" 
+                      placeholder="Ex: 123456789" 
+                      value={fbConfig.appId}
+                      onChange={(e) => setFbConfig({...fbConfig, appId: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="appSecret" className="text-sm font-bold">App Secret</label>
+                    <Input 
+                      id="appSecret" 
+                      type="password"
+                      placeholder="••••••••" 
+                      value={fbConfig.appSecret}
+                      onChange={(e) => setFbConfig({...fbConfig, appSecret: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleSaveFbConfig} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+                    Salvar Configuração
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <input 
               type="file" 
               accept=".csv" 
