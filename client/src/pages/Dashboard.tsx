@@ -1,3 +1,4 @@
+import { KPICard } from "@/components/KPICard";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { DashboardStats, InsertSale } from "@shared/schema";
@@ -584,7 +585,7 @@ export default function Dashboard() {
   if (isLoading) return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 sm:pb-20 font-sans">
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center space-x-2 overflow-hidden">
@@ -595,89 +596,7 @@ export default function Dashboard() {
               InstaDash <span className="text-[#EE4D2D] font-normal hidden sm:inline">Shopee</span>
             </h1>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 gap-1 sm:gap-2 font-bold shadow-sm h-9 px-2 sm:px-4">
-                  <Share2 className="w-4 h-4" />
-                  <span className="hidden xs:inline">Meus Links</span>
-                  <span className="xs:hidden">Links</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Share2 className="w-5 h-5 text-emerald-600" />
-                    Meus Links
-                  </DialogTitle>
-                  <DialogDescription>
-                    Gerencie seus links rastreados e crie novos para monitorar suas vendas.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <label className="text-sm font-bold">Link Original Shopee</label>
-                    <Input 
-                      placeholder="Cole o link do produto aqui..." 
-                      value={shopeeLink}
-                      onChange={(e) => setShopeeLink(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm font-bold">Sub ID (Identificador)</label>
-                    <Input 
-                      placeholder="Ex: influencer_joao ou story_hoje" 
-                      value={subId}
-                      onChange={(e) => setSubId(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={handleGenerateLink} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full">
-                    Gerar Link Rastreado
-                  </Button>
-                  
-                  {generatedLink && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Link Gerado:</p>
-                      <div className="flex gap-2">
-                        <Input readOnly value={generatedLink} className="bg-white" />
-                        <Button size="icon" variant="outline" onClick={() => copyToClipboard(generatedLink)}>
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-6 space-y-4">
-                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                      <Package className="w-4 h-4" />
-                      Meus Links Gerados
-                    </h3>
-                    <div className="max-h-[300px] overflow-y-auto space-y-2">
-                      {(trackedLinks || []).map((link: any) => (
-                        <div key={link.id} className="p-3 bg-white border border-gray-100 rounded-xl flex items-center justify-between">
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold truncate text-gray-900">{link.subId || "Sem ID"}</p>
-                            <p className="text-[10px] text-gray-400 truncate max-w-[200px]">{link.originalUrl}</p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <p className="text-xs font-bold text-blue-600">{link.clicks} cliques</p>
-                            </div>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" onClick={() => handleEditLink(link)}>
-                              <Settings className="w-3 h-3" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(`https://instadashshopee.netlify.app/l/${link.id}`)}>
-                              <Share2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
+          <div className="flex items-center space-x-2">
             <input 
               type="file" 
               accept=".csv" 
@@ -688,14 +607,99 @@ export default function Dashboard() {
             <Button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || uploadMutation.isPending}
-              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2 font-bold shadow-sm"
+              size="sm"
+              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2 font-bold shadow-sm h-9"
             >
               <Upload className="w-4 h-4" />
-              {isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha Shopee"}
+              <span className="hidden sm:inline">{isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha"}</span>
+              <span className="sm:hidden">{isUploading || uploadMutation.isPending ? "..." : "Planilha"}</span>
             </Button>
           </div>
         </div>
       </header>
+
+      {/* Barra de Navegação Mobile Fixa */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-2 py-2 flex sm:hidden items-center justify-around shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-[#EE4D2D] flex-1 hover:bg-transparent">
+          <BarChart3 className="w-5 h-5" />
+          <span className="text-[10px] font-bold">Resumo</span>
+        </Button>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent">
+              <Share2 className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Links</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] rounded-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-emerald-600" />
+                Gerador de Links
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label className="text-xs font-bold">Link da Shopee</label>
+                <Input placeholder="Cole o link..." value={shopeeLink} onChange={(e) => setShopeeLink(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-xs font-bold">Sub ID (Opcional)</label>
+                <Input placeholder="Ex: instagram" value={subId} onChange={(e) => setSubId(e.target.value)} />
+              </div>
+              <Button onClick={handleGenerateLink} className="bg-emerald-600 font-bold">Gerar e Salvar</Button>
+              
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-bold text-gray-500">Links Recentes</p>
+                {trackedLinks?.slice(0, 5).map((link: any) => (
+                  <div key={link.id} className="p-2.5 bg-gray-50 rounded-xl flex items-center justify-between border border-gray-100">
+                    <span className="text-[10px] font-bold truncate flex-1 mr-2">{link.subId || "Geral"}</span>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(link.trackedUrl)}>
+                      <Share2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent">
+              <FileText className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Uploads</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] rounded-2xl">
+            <DialogHeader><DialogTitle>Histórico</DialogTitle></DialogHeader>
+            <div className="max-h-[300px] overflow-y-auto space-y-2 py-4 px-1">
+              {uploadBatches?.map((batch) => (
+                <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold truncate">{new Date(batch.date).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-[10px] text-gray-500">{batch.count} vendas</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => deleteBatchMutation.mutate(batch.id)}>
+                    <AlertCircle className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <TrendingUp className="w-5 h-5" />
+          <span className="text-[10px] font-bold">Topo</span>
+        </Button>
+      </nav>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
         {lastError && (
