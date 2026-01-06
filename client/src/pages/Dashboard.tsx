@@ -586,19 +586,22 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#EE4D2D] rounded-lg flex items-center justify-center shadow-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center space-x-2 overflow-hidden">
+            <div className="w-8 h-8 flex-shrink-0 bg-[#EE4D2D] rounded-lg flex items-center justify-center shadow-md">
               <BarChart3 className="text-white w-5 h-5" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">InstaDash <span className="text-[#EE4D2D] font-normal">Shopee</span></h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+              InstaDash <span className="text-[#EE4D2D] font-normal hidden sm:inline">Shopee</span>
+            </h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 gap-2 font-bold shadow-sm">
+                <Button variant="outline" size="sm" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 gap-1 sm:gap-2 font-bold shadow-sm h-9 px-2 sm:px-4">
                   <Share2 className="w-4 h-4" />
-                  Meus Links
+                  <span className="hidden xs:inline">Meus Links</span>
+                  <span className="xs:hidden">Links</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
