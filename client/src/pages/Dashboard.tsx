@@ -697,29 +697,29 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
         {lastError && (
           <div className="space-y-4">
             <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle className="font-bold">Atenção!</AlertTitle>
-              <AlertDescription className="text-sm">
+              <AlertTitle className="font-bold text-sm sm:text-base">Atenção!</AlertTitle>
+              <AlertDescription className="text-xs sm:text-sm">
                 {lastError}
               </AlertDescription>
             </Alert>
             
             {debugHeaders.length > 0 && (
               <Card className="border-dashed border-2 bg-gray-50/50 rounded-2xl">
-                <CardHeader className="py-4">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-600">
+                <CardHeader className="py-3 sm:py-4 px-4 sm:px-6">
+                  <CardTitle className="text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
                     <FileText className="w-4 h-4" />
-                    Colunas detectadas no seu arquivo:
+                    Colunas detectadas:
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="flex flex-wrap gap-2">
+                <CardContent className="pb-3 sm:pb-4 px-4 sm:px-6">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {debugHeaders.map((h, i) => (
-                      <span key={i} className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-mono text-gray-500 shadow-sm">{h}</span>
+                      <span key={i} className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-white border border-gray-200 rounded-lg text-[9px] sm:text-[10px] font-mono text-gray-500 shadow-sm">{h}</span>
                     ))}
                   </div>
                 </CardContent>
@@ -728,70 +728,51 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Métricas Principais */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <Button 
-              variant={timeFilter === "today" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setTimeFilter("today")}
-              className="rounded-lg whitespace-nowrap"
-            >
-              Hoje
-            </Button>
-            <Button 
-              variant={timeFilter === "yesterday" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setTimeFilter("yesterday")}
-              className="rounded-lg whitespace-nowrap"
-            >
-              Ontem
-            </Button>
-            <Button 
-              variant={timeFilter === "weekly" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setTimeFilter("weekly")}
-              className="rounded-lg whitespace-nowrap"
-            >
-              Semanal
-            </Button>
-            <Button 
-              variant={timeFilter === "monthly" ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => setTimeFilter("monthly")}
-              className="rounded-lg whitespace-nowrap"
-            >
-              Mensal
-            </Button>
+        {/* Filtros e Histórico */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto w-full sm:w-auto scrollbar-hide">
+            {(["today", "yesterday", "weekly", "monthly"] as const).map((filter) => (
+              <Button 
+                key={filter}
+                variant={timeFilter === filter ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setTimeFilter(filter)}
+                className={`rounded-lg whitespace-nowrap flex-1 sm:flex-initial text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-9 ${timeFilter === filter ? "bg-[#EE4D2D] text-white hover:bg-[#D73211]" : ""}`}
+              >
+                {filter === "today" ? "Hoje" : 
+                 filter === "yesterday" ? "Ontem" : 
+                 filter === "weekly" ? "7 Dias" : "30 Dias"}
+              </Button>
+            ))}
           </div>
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 rounded-xl">
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl w-full sm:w-auto h-9 text-xs sm:text-sm">
                 <FileText className="w-4 h-4" />
-                Gerenciar Uploads
+                Histórico de Uploads
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] w-[95vw] rounded-2xl">
               <DialogHeader>
-                <DialogTitle>Histórico de Uploads</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg">Histórico de Uploads</DialogTitle>
+                <DialogDescription className="text-xs sm:text-sm">
                   Visualize e gerencie os arquivos que você subiu.
                 </DialogDescription>
               </DialogHeader>
-              <div className="max-h-[300px] overflow-y-auto space-y-2 py-4">
+              <div className="max-h-[300px] overflow-y-auto space-y-2 py-4 px-1">
                 {uploadBatches?.map((batch) => (
-                  <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">
+                  <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">
                         {new Date(batch.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
-                      <p className="text-xs text-gray-500">{batch.count} vendas importadas</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500">{batch.count} vendas importadas</p>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 h-8 w-8 shrink-0"
                       onClick={() => deleteBatchMutation.mutate(batch.id)}
                       disabled={deleteBatchMutation.isPending}
                     >
@@ -800,47 +781,47 @@ export default function Dashboard() {
                   </div>
                 ))}
                 {(!uploadBatches || uploadBatches.length === 0) && (
-                  <p className="text-center text-gray-500 py-8 text-sm">Nenhum upload realizado ainda.</p>
+                  <p className="text-center text-gray-500 py-8 text-xs sm:text-sm">Nenhum upload realizado ainda.</p>
                 )}
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
-                Faturamento Total
+            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
+              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 h-4 text-emerald-500" />
+                Faturamento
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black text-gray-900">{formatCurrency(stats?.totalRevenue || 0)}</div>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </CardContent>
           </Card>
 
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingDown className="w-4 h-4 text-red-500" />
-                Custos (Saídas)
+            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
+              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <TrendingDown className="w-3.5 h-3.5 sm:w-4 h-4 text-red-500" />
+                Custos
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-gray-900">{formatCurrency(stats?.totalExpenses || 0)}</div>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalExpenses || 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all ${stats && stats.netProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-            <CardHeader className="pb-2">
-              <CardTitle className={`text-xs font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                <DollarSign className="w-4 h-4" />
+          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all xs:col-span-2 md:col-span-1 ${stats && stats.netProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
+              <CardTitle className={`text-[10px] sm:text-xs font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <DollarSign className="w-3.5 h-3.5 sm:w-4 h-4" />
                 Lucro Líquido
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className={`text-4xl font-black ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className={`text-2xl sm:text-3xl md:text-4xl font-black truncate ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatCurrency(stats?.netProfit || 0)}
               </div>
             </CardContent>
@@ -848,93 +829,92 @@ export default function Dashboard() {
         </div>
 
         {/* Métricas de Engajamento */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 sm:gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <ShoppingCart className="w-4 h-4 text-blue-500" />
+            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
+              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 h-4 text-blue-500" />
                 Total Pedidos
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-xl sm:text-2xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
             </CardContent>
           </Card>
 
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <Share2 className="w-4 h-4 text-blue-600" />
+            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
+              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <Share2 className="w-3.5 h-3.5 sm:w-4 h-4 text-blue-600" />
                 Cliques Redes
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-xl sm:text-2xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Produto Mais Vendido - Novo Design */}
+        {/* Produto Mais Vendido - Responsivo */}
         {stats?.topProduct && (
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#EE4D2D] to-orange-400 rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-            <Card className="relative border-none shadow-2xl bg-white overflow-hidden rounded-[2.5rem]">
-              <div className="flex flex-col md:flex-row min-h-[280px]">
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#EE4D2D] to-orange-400 rounded-[1.5rem] sm:rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+            <Card className="relative border-none shadow-xl bg-white overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem]">
+              <div className="flex flex-col lg:flex-row">
                 {/* Lado Esquerdo - Info */}
-                <div className="flex-1 p-8 md:p-12 space-y-6">
+                <div className="flex-1 p-6 sm:p-8 lg:p-12 space-y-4 sm:space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-orange-100 rounded-2xl">
-                      <Trophy className="w-6 h-6 text-[#EE4D2D]" />
+                    <div className="p-2 bg-orange-100 rounded-xl">
+                      <Trophy className="w-5 h-5 text-[#EE4D2D]" />
                     </div>
-                    <span className="text-[#EE4D2D] font-black uppercase tracking-[0.2em] text-xs">Produto Revelação</span>
+                    <span className="text-[#EE4D2D] font-black uppercase tracking-[0.2em] text-[10px] sm:text-xs">Top Performance</span>
                   </div>
                   
-                  <div className="space-y-4">
-                    <h2 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight tracking-tighter">
+                  <div className="space-y-2 sm:space-y-4">
+                    <h2 className="text-xl sm:text-3xl lg:text-5xl font-black text-gray-900 leading-tight tracking-tight sm:tracking-tighter">
                       {stats.topProduct.name}
                     </h2>
-                    <p className="text-lg text-gray-500 font-medium max-w-lg">
-                      Líder absoluto em conversões. Este produto dominou os resultados da sua última análise.
+                    <p className="text-sm sm:text-lg text-gray-500 font-medium max-w-lg">
+                      Produto com maior número de conversões no período selecionado.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 pt-4">
+                  <div className="flex items-center gap-3 pt-2">
                     <div className="flex -space-x-2">
                       {[1,2,3].map(i => (
-                        <div key={i} className="w-10 h-10 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center">
-                          <Plus className="w-4 h-4 text-gray-300" />
+                        <div key={i} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 sm:border-4 border-white bg-gray-100 flex items-center justify-center">
+                          <Plus className="w-3 h-3 sm:w-4 h-4 text-gray-300" />
                         </div>
                       ))}
                     </div>
-                    <p className="text-sm font-bold text-gray-400">+ clientes interessados</p>
+                    <p className="text-[10px] sm:text-sm font-bold text-gray-400">Destaque do período</p>
                   </div>
                 </div>
 
-                {/* Lado Direito - Stats */}
-                <div className="w-full md:w-[320px] bg-gradient-to-br from-[#1E293B] to-[#0F172A] p-8 md:p-12 flex flex-col justify-center items-center text-center space-y-8">
+                {/* Lado Direito/Baixo - Stats */}
+                <div className="w-full lg:w-[300px] bg-[#1E293B] p-6 sm:p-8 lg:p-12 flex flex-col justify-center items-center text-center space-y-6 sm:space-y-8">
                   <div className="space-y-1">
-                    <div className="flex items-center justify-center gap-2 text-orange-400 mb-2">
-                      <Sparkles className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Performance</span>
+                    <div className="flex items-center justify-center gap-2 text-orange-400 mb-1 sm:mb-2">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Vendas</span>
                     </div>
-                    <p className="text-6xl md:text-7xl font-black text-white tracking-tighter">
+                    <p className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tighter">
                       {stats.topProduct.orders}
                     </p>
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Vendas Confirmadas</p>
                   </div>
 
                   <div className="w-full h-px bg-white/10" />
 
                   <div className="grid grid-cols-2 w-full gap-4">
                     <div className="text-center">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Impacto</p>
-                      <p className="text-2xl font-black text-white">
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Impacto</p>
+                      <p className="text-lg sm:text-2xl font-black text-white">
                         {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Rank</p>
-                      <p className="text-2xl font-black text-orange-400">#1</p>
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Rank</p>
+                      <p className="text-lg sm:text-2xl font-black text-orange-400">#1</p>
                     </div>
                   </div>
                 </div>
@@ -943,21 +923,21 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Divisão de Vendas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-3xl overflow-hidden group">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-8 px-8">
-              <CardTitle className="text-xl font-black text-gray-800">Shopee Vídeo</CardTitle>
-              <div className="p-3 bg-orange-100 rounded-2xl group-hover:bg-[#EE4D2D] transition-colors">
-                <Video className="h-6 w-6 text-[#EE4D2D] group-hover:text-white transition-colors" />
+        {/* Divisão de Vendas - Responsivo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+          <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-2xl sm:rounded-3xl overflow-hidden group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-6 sm:pt-8 px-6 sm:px-8">
+              <CardTitle className="text-base sm:text-xl font-black text-gray-800">Shopee Vídeo</CardTitle>
+              <div className="p-2 sm:p-3 bg-orange-100 rounded-xl sm:rounded-2xl group-hover:bg-[#EE4D2D] transition-colors">
+                <Video className="h-5 w-5 sm:h-6 sm:w-6 text-[#EE4D2D] group-hover:text-white" />
               </div>
             </CardHeader>
-            <CardContent className="px-8 pb-8">
-              <div className="text-5xl font-black text-[#EE4D2D] mb-2 tracking-tighter">
+            <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#EE4D2D] mb-1 sm:mb-2 tracking-tight sm:tracking-tighter truncate">
                 {formatCurrency(stats?.videoRevenue || 0)}
               </div>
-              <p className="text-sm font-medium text-gray-400">Vendas (Padrão)</p>
-              <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
+              <p className="text-xs sm:text-sm font-medium text-gray-400">Vendas Orgânicas</p>
+              <div className="mt-6 sm:mt-8 h-2.5 sm:h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#EE4D2D] rounded-full transition-all duration-1000" 
                   style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.videoRevenue / stats.totalRevenue) * 100 : 0}%` }}
@@ -966,19 +946,19 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-3xl overflow-hidden group">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-8 px-8">
-              <CardTitle className="text-xl font-black text-gray-800">Redes Sociais</CardTitle>
-              <div className="p-3 bg-blue-100 rounded-2xl group-hover:bg-blue-600 transition-colors">
-                <Share2 className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors" />
+          <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-2xl sm:rounded-3xl overflow-hidden group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-6 sm:pt-8 px-6 sm:px-8">
+              <CardTitle className="text-base sm:text-xl font-black text-gray-800">Redes Sociais</CardTitle>
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-xl sm:rounded-2xl group-hover:bg-blue-600 transition-colors">
+                <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 group-hover:text-white" />
               </div>
             </CardHeader>
-            <CardContent className="px-8 pb-8">
-              <div className="text-5xl font-black text-blue-600 mb-2 tracking-tighter">
+            <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-blue-600 mb-1 sm:mb-2 tracking-tight sm:tracking-tighter truncate">
                 {formatCurrency(stats?.socialRevenue || 0)}
               </div>
-              <p className="text-sm font-medium text-gray-400">Vendas com Sub ID ou Pendentes</p>
-              <div className="mt-8 h-3 bg-gray-100 rounded-full overflow-hidden">
+              <p className="text-xs sm:text-sm font-medium text-gray-400">Vendas com Sub ID / Ads</p>
+              <div className="mt-6 sm:mt-8 h-2.5 sm:h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 rounded-full transition-all duration-1000" 
                   style={{ width: `${stats && stats.totalRevenue > 0 ? (stats.socialRevenue / stats.totalRevenue) * 100 : 0}%` }}
@@ -988,39 +968,51 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-1 text-center md:text-left">
-            <h3 className="text-lg font-black text-gray-900">Análise Dinâmica</h3>
-            <p className="text-sm font-medium text-gray-500">Dados baseados no seu último upload.</p>
+            <h3 className="text-base sm:text-lg font-black text-gray-900">Análise de Produtos</h3>
+            <p className="text-xs sm:text-sm font-medium text-gray-500">Filtragem rápida do último upload.</p>
           </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
-             <div className="relative flex-1 md:w-64">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto">
+             <div className="relative w-full sm:w-64">
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                <Input 
-                 placeholder="Buscar..." 
-                 className="pl-10 rounded-xl border-gray-200 h-11"
+                 placeholder="Filtrar por nome ou ID..." 
+                 className="pl-10 rounded-xl border-gray-200 h-10 sm:h-11 text-xs sm:text-sm"
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
                />
              </div>
-             <Button variant="outline" className="h-11 rounded-xl font-bold px-6 border-gray-200">
-               <Plus className="w-4 h-4 mr-2" />
-               Custo
-             </Button>
+             <Dialog>
+               <DialogTrigger asChild>
+                 <Button variant="outline" className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm">
+                   <Plus className="w-4 h-4 mr-2" />
+                   Adicionar Custo
+                 </Button>
+               </DialogTrigger>
+               <DialogContent className="w-[95vw] rounded-2xl">
+                 <DialogHeader>
+                   <DialogTitle>Nova Despesa</DialogTitle>
+                   <DialogDescription>Lance custos operacionais ou de anúncios para cálculo de lucro.</DialogDescription>
+                 </DialogHeader>
+                 {/* Form simplificado aqui futuramente */}
+               </DialogContent>
+             </Dialog>
           </div>
         </div>
 
+        {/* Seção de Categorias - Responsivo */}
         {(stats as any)?.chartData?.length > 0 && (
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-3xl">
-            <CardHeader className="px-8 pt-8">
-              <CardTitle className="text-xl font-black text-gray-800 flex items-center gap-2">
+          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl sm:rounded-3xl">
+            <CardHeader className="px-6 sm:px-8 pt-6 sm:pt-8">
+              <CardTitle className="text-base sm:text-xl font-black text-gray-800 flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-[#EE4D2D]" />
-                Vendas por Categoria
+                Mix de Vendas
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-8 pb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="h-[300px] w-full">
+            <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
+              <div className="flex flex-col lg:flex-row gap-6 sm:gap-12 items-center">
+                <div className="h-[250px] sm:h-[300px] w-full max-w-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
@@ -1037,16 +1029,17 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <RechartsTooltip />
-                      <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="space-y-4">
-                  <h3 className="font-bold text-gray-700">Resumo de Categorias</h3>
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 w-full">
                   {((stats?.chartData) || []).map((item: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                      <span className="text-sm font-medium text-gray-600">{item.name}</span>
-                      <span className="font-bold text-gray-900">{item.value} vendas</span>
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5] }} />
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-600 truncate">{item.name}</span>
+                      </div>
+                      <span className="text-xs sm:text-sm font-black text-gray-900 shrink-0">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1056,13 +1049,17 @@ export default function Dashboard() {
         )}
       </main>
 
-      <footer className="max-w-6xl mx-auto px-6 py-8 border-t border-gray-200 text-center space-y-4">
-        <div className="flex items-center justify-center space-x-6 text-sm font-medium text-gray-500">
-          <Link href="/terms" className="hover:text-[#EE4D2D] transition-colors">Termos de Serviço</Link>
-          <Link href="/privacy" className="hover:text-[#EE4D2D] transition-colors">Política de Privacidade</Link>
-          <Link href="/data-deletion" className="hover:text-[#EE4D2D] transition-colors">Exclusão de Dados</Link>
+      <footer className="max-w-6xl mx-auto px-6 py-10 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+          <div className="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-6">
+            <Link href="/terms" className="text-xs sm:text-sm font-bold text-gray-400 hover:text-[#EE4D2D] transition-colors">Termos</Link>
+            <Link href="/privacy" className="text-xs sm:text-sm font-bold text-gray-400 hover:text-[#EE4D2D] transition-colors">Privacidade</Link>
+            <Link href="/data-deletion" className="text-xs sm:text-sm font-bold text-gray-400 hover:text-[#EE4D2D] transition-colors">LGPD</Link>
+          </div>
+          <p className="text-[10px] sm:text-xs font-bold text-gray-300 uppercase tracking-widest">
+            © 2026 InstaDash. Focado em Conversão.
+          </p>
         </div>
-        <p className="text-xs text-gray-400">© 2026 InstaDash. Todos os direitos reservados.</p>
       </footer>
     </div>
   );
