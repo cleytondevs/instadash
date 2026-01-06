@@ -382,7 +382,7 @@ export default function Dashboard() {
   const [subId, setSubId] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
 
-  const { data: trackedLinks, refetch: refetchLinks } = useQuery({
+  const { data: trackedLinks, refetch: refetchLinks } = useQuery<any[]>({
     queryKey: ["/api/links"],
   });
 
@@ -566,112 +566,19 @@ export default function Dashboard() {
           <div className="flex items-center space-x-4">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2 font-bold border-gray-200">
-                  <Settings className="w-4 h-4" />
-                  Configurar Meta
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Facebook className="w-5 h-5 text-blue-600" />
-                    Configuração Meta Ads
-                  </DialogTitle>
-                  <DialogDescription>
-                    Insira as chaves do seu aplicativo do Facebook para integrar os anúncios do Instagram.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 text-xs space-y-2">
-                    <p className="font-bold flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" /> Configuração Obrigatória no Painel Meta:
-                    </p>
-                    <ul className="list-disc pl-4 space-y-1">
-                      <li className="break-all"><strong>URL do Site:</strong> https://instadashshopee.netlify.app</li>
-                      <li className="break-all"><strong>Redirecionamento OAuth:</strong> https://instadashshopee.netlify.app/</li>
-                      <li className="break-all"><strong>JavaScript SDK:</strong> https://instadashshopee.netlify.app/</li>
-                      <li className="break-all"><strong>Privacidade:</strong> https://instadashshopee.netlify.app/privacy</li>
-                      <li className="break-all"><strong>Termos:</strong> https://instadashshopee.netlify.app/terms</li>
-                      <li className="break-all"><strong>Exclusão de Dados:</strong> https://instadashshopee.netlify.app/data-deletion</li>
-                    </ul>
-                  </div>
-                  <div className="grid gap-2">
-                    <label htmlFor="appId" className="text-sm font-bold">App ID</label>
-                    <Input 
-                      id="appId" 
-                      placeholder="Ex: 123456789" 
-                      value={fbConfig.appId}
-                      onChange={(e) => setFbConfig({...fbConfig, appId: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label htmlFor="appSecret" className="text-sm font-bold">App Secret</label>
-                    <Input 
-                      id="appSecret" 
-                      type="password"
-                      placeholder="••••••••" 
-                      value={fbConfig.appSecret}
-                      onChange={(e) => setFbConfig({...fbConfig, appSecret: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <DialogFooter className="flex flex-col gap-2 sm:flex-col sm:space-x-0">
-                  <Button onClick={handleSaveFbConfig} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
-                    Salvar Configuração
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-                    onClick={handleConnectFb}
-                    disabled={isConnectingFb}
-                  >
-                    <Facebook className="w-4 h-4" />
-                    {isConnectingFb ? "Conectando..." : "Conectar Perfil Facebook"}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                    onClick={fetchAdSpend}
-                    disabled={isFetchingAds}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {isFetchingAds ? "Buscando..." : "Atualizar Gastos Meta"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <input 
-              type="file" 
-              accept=".csv" 
-              className="hidden" 
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-            />
-            <Button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading || uploadMutation.isPending}
-              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2 font-bold shadow-sm"
-            >
-              <Upload className="w-4 h-4" />
-              {isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha Shopee"}
-            </Button>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-bold shadow-sm">
+                <Button variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 gap-2 font-bold shadow-sm">
                   <Share2 className="w-4 h-4" />
-                  Gerador de Links
+                  Meus Links
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Share2 className="w-5 h-5 text-emerald-600" />
-                    Gerador de Links Rastreados
+                    Meus Links
                   </DialogTitle>
                   <DialogDescription>
-                    Adicione Sub IDs e tags aos seus links da Shopee para rastrear as vendas.
+                    Gerencie seus links rastreados e crie novos para monitorar suas vendas.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -712,7 +619,7 @@ export default function Dashboard() {
                       <Package className="w-4 h-4" />
                       Meus Links Gerados
                     </h3>
-                    <div className="max-h-[200px] overflow-y-auto space-y-2">
+                    <div className="max-h-[300px] overflow-y-auto space-y-2">
                       {(trackedLinks || []).map((link: any) => (
                         <div key={link.id} className="p-3 bg-white border border-gray-100 rounded-xl flex items-center justify-between">
                           <div className="min-w-0">
@@ -734,6 +641,22 @@ export default function Dashboard() {
                 </div>
               </DialogContent>
             </Dialog>
+
+            <input 
+              type="file" 
+              accept=".csv" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+            />
+            <Button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || uploadMutation.isPending}
+              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2 font-bold shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              {isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha Shopee"}
+            </Button>
           </div>
         </div>
       </header>
