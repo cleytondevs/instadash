@@ -381,9 +381,25 @@ export default function Dashboard() {
   const [shopeeLink, setShopeeLink] = useState("");
   const [subId, setSubId] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
+  const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
 
   const { data: trackedLinks, refetch: refetchLinks } = useQuery<any[]>({
     queryKey: ["/api/links"],
+  });
+
+  const updateLinkMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("PATCH", `/api/links/${data.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/links"] });
+      toast({ title: "Sucesso", description: "Link atualizado com sucesso!" });
+      setEditingLinkId(null);
+      setShopeeLink("");
+      setSubId("");
+      setGeneratedLink("");
+    },
   });
 
   const createLinkMutation = useMutation({
@@ -392,7 +408,7 @@ export default function Dashboard() {
       return res.json();
     },
     onSuccess: () => {
-      refetchLinks();
+      queryClient.invalidateQueries({ queryKey: ["/api/links"] });
       toast({ title: "Sucesso", description: "Link salvo em 'Meus Links'" });
     }
   });
@@ -411,16 +427,29 @@ export default function Dashboard() {
       const finalLink = url.toString();
       setGeneratedLink(finalLink);
       
-      // Salvar no banco
-      createLinkMutation.mutate({
-        originalUrl: finalLink,
-        trackedUrl: "", // Será gerado pelo backend se necessário, mas aqui usamos o ID
-        subId: subId
-      });
-      
+      if (editingLinkId) {
+        updateLinkMutation.mutate({
+          id: editingLinkId,
+          originalUrl: finalLink,
+          subId: subId
+        });
+      } else {
+        createLinkMutation.mutate({
+          originalUrl: finalLink,
+          trackedUrl: "",
+          subId: subId
+        });
+      }
     } catch (e) {
       toast({ variant: "destructive", title: "Link Inválido", description: "Certifique-se de que o link da Shopee está correto." });
     }
+  };
+
+  const handleEditLink = (link: any) => {
+    setEditingLinkId(link.id);
+    setShopeeLink(link.originalUrl);
+    setSubId(link.subId || "");
+    setGeneratedLink("");
   };
 
   const copyToClipboard = (text: string) => {
@@ -630,6 +659,9 @@ export default function Dashboard() {
                             <div className="text-right">
                               <p className="text-xs font-bold text-blue-600">{link.clicks} cliques</p>
                             </div>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" onClick={() => handleEditLink(link)}>
+                              <Settings className="w-3 h-3" />
+                            </Button>
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(`https://instadashshopee.netlify.app/l/${link.id}`)}>
                               <Share2 className="w-3 h-3" />
                             </Button>

@@ -25,6 +25,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  app.patch("/api/links/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).send("ID inválido");
+      const data = insertTrackedLinkSchema.partial().parse(req.body);
+      const link = await storage.updateTrackedLink(id, data);
+      res.json(link);
+    } catch (err) {
+      res.status(400).json({ message: "Dados inválidos" });
+    }
+  });
+
   // Redirect handler for tracked links
   app.get("/l/:id", async (req, res) => {
     const id = parseInt(req.params.id);

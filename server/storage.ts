@@ -31,6 +31,7 @@ export interface IStorage {
   createTrackedLink(link: InsertTrackedLink & { userId: string }): Promise<TrackedLink>;
   getTrackedLinks(userId: string): Promise<TrackedLink[]>;
   incrementLinkClicks(id: number): Promise<void>;
+  updateTrackedLink(id: number, data: Partial<InsertTrackedLink>): Promise<TrackedLink>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -155,6 +156,15 @@ export class DatabaseStorage implements IStorage {
     await db.update(trackedLinks)
       .set({ clicks: sql`${trackedLinks.clicks} + 1` })
       .where(eq(trackedLinks.id, id));
+  }
+
+  async updateTrackedLink(id: number, data: Partial<InsertTrackedLink>): Promise<TrackedLink> {
+    const [updatedLink] = await db.update(trackedLinks)
+      .set(data)
+      .where(eq(trackedLinks.id, id))
+      .returning();
+    if (!updatedLink) throw new Error("Link not found");
+    return updatedLink;
   }
 }
 
