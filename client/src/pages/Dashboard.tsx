@@ -378,6 +378,34 @@ export default function Dashboard() {
 
   const [fbAdSpend, setFbAdSpend] = useState<number>(0);
   const [isFetchingAds, setIsFetchingAds] = useState(false);
+  const [shopeeLink, setShopeeLink] = useState("");
+  const [subId, setSubId] = useState("");
+  const [generatedLink, setGeneratedLink] = useState("");
+
+  const handleGenerateLink = () => {
+    if (!shopeeLink) {
+      toast({ variant: "destructive", title: "Erro", description: "Insira um link da Shopee" });
+      return;
+    }
+    
+    try {
+      const url = new URL(shopeeLink);
+      if (subId) url.searchParams.set("sub_id", subId);
+      url.searchParams.set("utm_source", "instadash");
+      
+      const finalLink = url.toString();
+      setGeneratedLink(finalLink);
+      
+      toast({ title: "Link Gerado", description: "Seu link rastreado está pronto para uso." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Link Inválido", description: "Certifique-se de que o link da Shopee está correto." });
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado!", description: "Link copiado para a área de transferência." });
+  };
 
   const fetchAdSpend = () => {
     if (!(window as any).FB) {
@@ -607,6 +635,59 @@ export default function Dashboard() {
               <Upload className="w-4 h-4" />
               {isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha Shopee"}
             </Button>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-bold shadow-sm">
+                  <Share2 className="w-4 h-4" />
+                  Gerador de Links
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Share2 className="w-5 h-5 text-emerald-600" />
+                    Gerador de Links Rastreados
+                  </DialogTitle>
+                  <DialogDescription>
+                    Adicione Sub IDs e tags aos seus links da Shopee para rastrear as vendas.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label className="text-sm font-bold">Link Original Shopee</label>
+                    <Input 
+                      placeholder="Cole o link do produto aqui..." 
+                      value={shopeeLink}
+                      onChange={(e) => setShopeeLink(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm font-bold">Sub ID (Identificador)</label>
+                    <Input 
+                      placeholder="Ex: influencer_joao ou story_hoje" 
+                      value={subId}
+                      onChange={(e) => setSubId(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleGenerateLink} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full">
+                    Gerar Link Rastreado
+                  </Button>
+                  
+                  {generatedLink && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Link Gerado:</p>
+                      <div className="flex gap-2">
+                        <Input readOnly value={generatedLink} className="bg-white" />
+                        <Button size="icon" variant="outline" onClick={() => copyToClipboard(generatedLink)}>
+                          <FileText className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
