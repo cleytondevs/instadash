@@ -17,11 +17,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.post("/api/links", async (req, res) => {
     try {
+      console.log("Recebendo link para salvar:", req.body);
       const data = insertTrackedLinkSchema.parse(req.body);
       const link = await storage.createTrackedLink({ ...data, userId: "default-user" });
       res.status(201).json(link);
     } catch (err) {
-      res.status(400).json({ message: "Dados inválidos" });
+      console.error("Erro ao salvar link:", err);
+      res.status(400).json({ message: "Dados inválidos", details: err instanceof Error ? err.message : String(err) });
     }
   });
 

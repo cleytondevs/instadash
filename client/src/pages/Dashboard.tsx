@@ -430,13 +430,14 @@ export default function Dashboard() {
       if (editingLinkId) {
         updateLinkMutation.mutate({
           id: editingLinkId,
-          originalUrl: finalLink,
+          originalUrl: shopeeLink,
+          trackedUrl: generatedLink || finalLink,
           subId: subId
         });
       } else {
         createLinkMutation.mutate({
-          originalUrl: finalLink,
-          trackedUrl: "",
+          originalUrl: shopeeLink,
+          trackedUrl: finalLink,
           subId: subId
         });
       }
