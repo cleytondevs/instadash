@@ -20,7 +20,8 @@ import {
   Sparkles,
   Settings,
   Facebook,
-  Package
+  Package,
+  PieChart
 } from "lucide-react";
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip as RechartsTooltip
+} from "recharts";
 import {
   Dialog,
   DialogContent,
@@ -135,6 +144,26 @@ export default function Dashboard() {
           }
         }
 
+        const categoryData = Object.entries(productCounts)
+          .map(([name, value]) => {
+            // Lógica simples de categorização baseada em palavras-chave
+            let category = "Outros";
+            const lowerName = name.toLowerCase();
+            if (lowerName.includes("creme") || lowerName.includes("shampoo") || lowerName.includes("maquiagem") || lowerName.includes("pele")) category = "Cosméticos";
+            else if (lowerName.includes("fone") || lowerName.includes("celular") || lowerName.includes("usb") || lowerName.includes("eletrônico")) category = "Eletrônicos";
+            else if (lowerName.includes("camisa") || lowerName.includes("calça") || lowerName.includes("vestido")) category = "Vestuário";
+            else if (lowerName.includes("casa") || lowerName.includes("cozinha") || lowerName.includes("decoração")) category = "Casa";
+            
+            return { name, value, category };
+          });
+
+        const categorySummary = categoryData.reduce((acc: Record<string, number>, item) => {
+          acc[item.category] = (acc[item.category] || 0) + item.value;
+          return acc;
+        }, {});
+
+        const chartData = Object.entries(categorySummary).map(([name, value]) => ({ name, value }));
+
         const stats = {
           totalRevenue,
           videoRevenue,
@@ -146,7 +175,8 @@ export default function Dashboard() {
           socialClicks: (salesData || [])
             .filter((s: any) => s.source === 'social_media')
             .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
-          topProduct
+          topProduct,
+          chartData
         };
         
         return stats;
@@ -894,38 +924,46 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {filteredProducts.length > 0 && (
+        {(stats as any)?.chartData?.length > 0 && (
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-3xl">
             <CardHeader className="px-8 pt-8">
               <CardTitle className="text-xl font-black text-gray-800 flex items-center gap-2">
-                <Package className="w-5 h-5 text-[#EE4D2D]" />
-                Produtos Carregados
+                <PieChart className="w-5 h-5 text-[#EE4D2D]" />
+                Vendas por Categoria
               </CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="font-bold text-gray-900">ID do Pedido</TableHead>
-                      <TableHead className="font-bold text-gray-900">Sub ID</TableHead>
-                      <TableHead className="font-bold text-gray-900">Produto</TableHead>
-                      <TableHead className="font-bold text-gray-900 text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProducts.map((product, index) => (
-                      <TableRow key={`${product.orderId}-${index}`} className="hover:bg-gray-50 transition-colors">
-                        <TableCell className="font-mono text-sm text-gray-500">{product.orderId}</TableCell>
-                        <TableCell className="font-mono text-sm text-gray-500">{product.subId}</TableCell>
-                        <TableCell className="font-medium text-gray-900">{product.productName}</TableCell>
-                        <TableCell className="text-right font-bold text-emerald-600">
-                          {formatCurrency(product.revenue)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={(stats as any)?.chartData || []}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {((stats as any)?.chartData || []).map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip />
+                      <Legend />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-4">
+                  <h3 className="font-bold text-gray-700">Resumo de Categorias</h3>
+                  {((stats as any)?.chartData || []).map((item: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                      <span className="text-sm font-medium text-gray-600">{item.name}</span>
+                      <span className="font-bold text-gray-900">{item.value} vendas</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
