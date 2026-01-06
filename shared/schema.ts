@@ -90,3 +90,22 @@ export interface DashboardStats {
     orders: number;
   } | null;
 }
+
+export const trackedLinks = pgTable("tracked_links", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  originalUrl: text("original_url").notNull(),
+  trackedUrl: text("tracked_url").notNull(),
+  subId: text("sub_id"),
+  clicks: integer("clicks").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTrackedLinkSchema = createInsertSchema(trackedLinks).omit({ 
+  id: true, 
+  clicks: true, 
+  createdAt: true 
+});
+
+export type TrackedLink = typeof trackedLinks.$inferSelect;
+export type InsertTrackedLink = z.infer<typeof insertTrackedLinkSchema>;

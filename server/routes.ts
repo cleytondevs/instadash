@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertSaleSchema, insertExpenseSchema } from "@shared/schema";
+import { insertSaleSchema, insertExpenseSchema, insertTrackedLinkSchema } from "@shared/schema";
 import { z } from "zod";
 import { handleDataDeletion } from "./facebook-callback";
 
@@ -9,6 +9,38 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Facebook Data Deletion Callback
   app.post("/api/facebook/deletion", handleDataDeletion);
   
+  // Tracked Links
+  app.get("/api/links", async (req, res) => {
+    const links = await storage.getTrackedLinks("default-user");
+    res.json(links);
+  });
+
+  app.post("/api/links", async (req, res) => {
+    try {
+      const data = insertTrackedLinkSchema.parse(req.body);
+      const link = await storage.createTrackedLink({ ...data, userId: "default-user" });
+      res.status(201).json(link);
+    } catch (err) {
+      res.status(400).json({ message: "Dados inválidos" });
+    }
+  });
+
+  // Redirect handler for tracked links
+  app.get("/l/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).send("ID inválido");
+    
+    const links = await storage.getTrackedLinks("default-user");
+    const link = links.find(l => l.id === id);
+    
+    if (link) {
+      await storage.incrementLinkClicks(id);
+      res.redirect(link.originalUrl);
+    } else {
+      res.status(404).send("Link não encontrado");
+    }
+  });
+
   // Sales stats
   app.get("/api/stats", async (req, res) => {
     try {

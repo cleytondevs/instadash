@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { DashboardStats, InsertSale } from "@shared/schema";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { 
   BarChart3, 
@@ -71,7 +71,7 @@ export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("weekly");
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
 
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading } = useQuery<any>({
     queryKey: ["dashboard-stats", timeFilter],
     queryFn: async () => {
       try {
@@ -382,6 +382,21 @@ export default function Dashboard() {
   const [subId, setSubId] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
 
+  const { data: trackedLinks, refetch: refetchLinks } = useQuery({
+    queryKey: ["/api/links"],
+  });
+
+  const createLinkMutation = useMutation({
+    mutationFn: async (newLink: any) => {
+      const res = await apiRequest("POST", "/api/links", newLink);
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchLinks();
+      toast({ title: "Sucesso", description: "Link salvo em 'Meus Links'" });
+    }
+  });
+
   const handleGenerateLink = () => {
     if (!shopeeLink) {
       toast({ variant: "destructive", title: "Erro", description: "Insira um link da Shopee" });
@@ -396,7 +411,13 @@ export default function Dashboard() {
       const finalLink = url.toString();
       setGeneratedLink(finalLink);
       
-      toast({ title: "Link Gerado", description: "Seu link rastreado está pronto para uso." });
+      // Salvar no banco
+      createLinkMutation.mutate({
+        originalUrl: finalLink,
+        trackedUrl: "", // Será gerado pelo backend se necessário, mas aqui usamos o ID
+        subId: subId
+      });
+      
     } catch (e) {
       toast({ variant: "destructive", title: "Link Inválido", description: "Certifique-se de que o link da Shopee está correto." });
     }
@@ -685,6 +706,31 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+                  
+                  <div className="mt-6 space-y-4">
+                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      Meus Links Gerados
+                    </h3>
+                    <div className="max-h-[200px] overflow-y-auto space-y-2">
+                      {(trackedLinks || []).map((link: any) => (
+                        <div key={link.id} className="p-3 bg-white border border-gray-100 rounded-xl flex items-center justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold truncate text-gray-900">{link.subId || "Sem ID"}</p>
+                            <p className="text-[10px] text-gray-400 truncate max-w-[200px]">{link.originalUrl}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-blue-600">{link.clicks} cliques</p>
+                            </div>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(`https://instadashshopee.netlify.app/l/${link.id}`)}>
+                              <Share2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1019,7 +1065,7 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
-                        data={(stats as any)?.chartData || []}
+                        data={(stats?.chartData) || []}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -1027,7 +1073,7 @@ export default function Dashboard() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {((stats as any)?.chartData || []).map((entry: any, index: number) => (
+                        {((stats?.chartData) || []).map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5]} />
                         ))}
                       </Pie>
@@ -1038,7 +1084,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-4">
                   <h3 className="font-bold text-gray-700">Resumo de Categorias</h3>
-                  {((stats as any)?.chartData || []).map((item: any, index: number) => (
+                  {((stats?.chartData) || []).map((item: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                       <span className="text-sm font-medium text-gray-600">{item.name}</span>
                       <span className="font-bold text-gray-900">{item.value} vendas</span>

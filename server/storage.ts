@@ -1,8 +1,9 @@
 import { 
-  users, sales, expenses,
+  users, sales, expenses, trackedLinks,
   type User, type InsertUser,
   type Sale, type InsertSale,
   type Expense, type InsertExpense,
+  type TrackedLink, type InsertTrackedLink,
   type DashboardStats
 } from "@shared/schema";
 import { db } from "./db";
@@ -25,6 +26,11 @@ export interface IStorage {
 
   // Dashboard
   getDashboardStats(userId: string): Promise<DashboardStats>;
+
+  // Tracked Links
+  createTrackedLink(link: InsertTrackedLink & { userId: string }): Promise<TrackedLink>;
+  getTrackedLinks(userId: string): Promise<TrackedLink[]>;
+  incrementLinkClicks(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -134,6 +140,21 @@ export class DatabaseStorage implements IStorage {
       socialClicks,
       topProduct
     };
+  }
+
+  async createTrackedLink(link: InsertTrackedLink & { userId: string }): Promise<TrackedLink> {
+    const [newLink] = await db.insert(trackedLinks).values(link).returning();
+    return newLink;
+  }
+
+  async getTrackedLinks(userId: string): Promise<TrackedLink[]> {
+    return db.select().from(trackedLinks).where(eq(trackedLinks.userId, userId));
+  }
+
+  async incrementLinkClicks(id: number): Promise<void> {
+    await db.update(trackedLinks)
+      .set({ clicks: sql`${trackedLinks.clicks} + 1` })
+      .where(eq(trackedLinks.id, id));
   }
 }
 
