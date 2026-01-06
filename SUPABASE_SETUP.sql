@@ -36,9 +36,26 @@ CREATE TABLE IF NOT EXISTS users (
     fb_access_token TEXT
 );
 
+-- 4. Tabela de Links Rastreados (Tracked Links)
+CREATE TABLE IF NOT EXISTS tracked_links (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    original_url TEXT NOT NULL,
+    tracked_url TEXT NOT NULL,
+    sub_id TEXT,
+    clicks INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- Habilitar acesso público (apenas para teste inicial, considere RLS depois)
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public access" ON sales FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public access" ON expenses FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE tracked_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public access" ON tracked_links FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public access" ON users FOR ALL USING (true) WITH CHECK (true);
