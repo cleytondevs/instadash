@@ -569,8 +569,13 @@ export default function Dashboard() {
   const { data: campaignSheets } = useQuery({
     queryKey: ["campaign-sheets"],
     queryFn: async () => {
+      console.log("Fetching campaign sheets from Supabase...");
       const { data, error } = await supabase.from("campaign_sheets").select("sub_id");
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Error (campaign_sheets):", error);
+        throw error;
+      }
+      console.log("Campaign sheets data:", data);
       return data?.map(s => s.sub_id) || [];
     }
   });

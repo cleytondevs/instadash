@@ -9,4 +9,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Fallback para strings vazias para evitar erro de inicialização imediata no carregamento do módulo
-export const supabase = createClient(supabaseUrl || "https://placeholder.supabase.co", supabaseAnonKey || "placeholder");
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co", 
+  supabaseAnonKey || "placeholder",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    db: {
+      schema: 'public'
+    }
+  }
+);
