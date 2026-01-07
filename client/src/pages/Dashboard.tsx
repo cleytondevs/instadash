@@ -1147,22 +1147,24 @@ export default function Dashboard() {
              </div>
              {searchTerm && (
                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto">
-                 {campaignSheets?.includes(searchTerm) ? (
-                   <Link href={`/campaign/${encodeURIComponent(searchTerm)}`}>
+                 {campaignSheets?.includes(searchTerm.trim()) ? (
+                   <Link href={`/campaign/${encodeURIComponent(searchTerm.trim())}`}>
                      <Button variant="outline" className="h-10 sm:h-11 rounded-xl font-bold px-6 border-blue-200 text-blue-600 hover:bg-blue-50 w-full sm:w-auto">
                        <Plus className="w-4 h-4 mr-2" />
                        Adicionar à Planilha: {searchTerm}
                      </Button>
                    </Link>
                  ) : (
-                   <Button 
-                     variant="outline" 
-                     className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm"
-                     onClick={() => setSubIdForNewCampaign(searchTerm)}
-                   >
-                     <Plus className="w-4 h-4 mr-2" />
-                     Criar Planilha: {searchTerm}
-                   </Button>
+                   timeFilter === "today" && (
+                     <Button 
+                       variant="outline" 
+                       className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm"
+                       onClick={() => setSubIdForNewCampaign(searchTerm.trim())}
+                     >
+                       <Plus className="w-4 h-4 mr-2" />
+                       Criar Planilha: {searchTerm}
+                     </Button>
+                   )
                  )}
                </div>
              )}
