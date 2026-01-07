@@ -231,24 +231,25 @@ export default function Dashboard() {
 
   const uploadMutation = useMutation({
     mutationFn: async (sales: any[]) => {
+      if (!user) throw new Error("Usuário não autenticado");
       try {
         const batchId = `upload_${Date.now()}`;
+        const salesToInsert = sales.map(s => ({
+          user_id: user.id,
+          order_id: s.orderId,
+          product_name: s.productName,
+          revenue: s.revenue,
+          clicks: s.clicks,
+          source: s.source,
+          sub_id: s.subId,
+          order_date: s.orderDate,
+          batch_id: batchId
+        }));
+        
+        console.log("Inserindo vendas para o usuário:", user.id);
         const { error: insertError } = await supabase
           .from("sales")
-          .upsert(
-            sales.map(s => ({
-              user_id: user.id,
-              order_id: s.orderId,
-              product_name: s.productName,
-              revenue: s.revenue,
-              clicks: s.clicks,
-              source: s.source,
-              sub_id: s.subId,
-              order_date: s.orderDate,
-              batch_id: batchId
-            })),
-            { onConflict: 'order_id' }
-          );
+          .upsert(salesToInsert, { onConflict: 'order_id' });
 
         if (insertError) {
           console.error("Erro no upsert:", insertError);
