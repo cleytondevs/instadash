@@ -72,7 +72,39 @@ export async function setupTables() {
         clicks INTEGER DEFAULT 0 NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS campaign_sheets (
+        id SERIAL PRIMARY KEY,
+        sub_id TEXT UNIQUE NOT NULL,
+        user_id TEXT REFERENCES users(id),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS campaign_expenses (
+        id SERIAL PRIMARY KEY,
+        campaign_sheet_id INTEGER REFERENCES campaign_sheets(id) ON DELETE CASCADE,
+        amount INTEGER NOT NULL,
+        date DATE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
       
+      CREATE TABLE IF NOT EXISTS campaign_sheets (
+        id SERIAL PRIMARY KEY,
+        sub_id TEXT UNIQUE NOT NULL,
+        user_id TEXT REFERENCES users(id),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS campaign_expenses (
+        id SERIAL PRIMARY KEY,
+        campaign_sheet_id INTEGER REFERENCES campaign_sheets(id) ON DELETE CASCADE,
+        amount INTEGER NOT NULL,
+        date DATE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
       -- Garantir que as tabelas sejam expostas no schema public para a API
       GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres;
       GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres;

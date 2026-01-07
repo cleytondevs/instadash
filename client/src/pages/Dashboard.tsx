@@ -566,6 +566,29 @@ export default function Dashboard() {
     }).format(cents / 100);
   };
 
+  const { data: campaignSheets } = useQuery({
+    queryKey: ["campaign-sheets"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("campaign_sheets").select("sub_id");
+      if (error) throw error;
+      return data?.map(s => s.sub_id) || [];
+    }
+  });
+
+  const createCampaignMutation = useMutation({
+    mutationFn: async (subId: string) => {
+      const { data, error } = await supabase
+        .from("campaign_sheets")
+        .insert([{ sub_id: subId, user_id: "default-user" }]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheets"] });
+      toast({ title: "Sucesso", description: "Planilha de campanha criada." });
+    }
+  });
+
   const filteredProducts = useMemo(() => {
     const dataToFilter = stats?.salesData || localProducts || [];
     if (!dataToFilter.length) return [];
@@ -1076,7 +1099,32 @@ export default function Dashboard() {
                     <TableCell className="text-xs font-medium max-w-[200px] truncate">{product.productName}</TableCell>
                     <TableCell className="text-[10px] font-bold text-blue-600">{product.subId || "-"}</TableCell>
                     <TableCell className="text-[10px] font-mono text-gray-400">{product.orderId}</TableCell>
-                    <TableCell className="text-xs font-bold text-gray-900 text-right">{formatCurrency(product.revenue)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-bold text-[#EE4D2D]">
+                          {formatCurrency(product.revenue)}
+                        </span>
+                        {product.subId !== "-" && (
+                          campaignSheets?.includes(product.subId) ? (
+                            <Link href={`/campaign/${encodeURIComponent(product.subId)}`}>
+                              <Button variant="outline" size="sm" className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50">
+                                Ver Detalhes
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 text-xs border-gray-200 text-gray-600 hover:bg-gray-50"
+                              onClick={() => createCampaignMutation.mutate(product.subId)}
+                              disabled={createCampaignMutation.isPending}
+                            >
+                              Criar Planilha
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-xs font-medium text-gray-500 text-right">{product.clicks}</TableCell>
                   </TableRow>
                 ))}
