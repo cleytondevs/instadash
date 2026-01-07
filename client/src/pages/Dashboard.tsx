@@ -679,6 +679,40 @@ export default function Dashboard() {
               ref={fileInputRef}
               onChange={handleFileUpload}
             />
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden sm:flex h-9 rounded-xl font-bold px-4 border-gray-200 gap-2">
+                  <Plus className="w-4 h-4" />
+                  Gerenciamento
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px] w-[95vw] rounded-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Gerenciamento de Vendas</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
+                    {trackedLinks?.filter(l => campaignSheets?.includes(l.subId)).map((link: any) => (
+                      <Link key={link.id} href={`/campaign/${encodeURIComponent(link.subId)}`}>
+                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold truncate">{link.subId}</p>
+                            <p className="text-[10px] text-gray-500">Toque para gerenciar</p>
+                          </div>
+                          <TrendingUp className="w-4 h-4 text-emerald-500" />
+                        </div>
+                      </Link>
+                    ))}
+                    {(!campaignSheets || campaignSheets.length === 0) && (
+                      <p className="text-center text-gray-500 py-8 text-xs">Nenhuma planilha de campanha criada ainda.</p>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <Button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || uploadMutation.isPending}
