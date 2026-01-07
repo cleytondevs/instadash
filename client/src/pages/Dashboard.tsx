@@ -644,7 +644,7 @@ export default function Dashboard() {
     const dataToFilter = stats?.salesData || localProducts || [];
     if (!dataToFilter.length) return [];
     
-    return dataToFilter
+    const products = dataToFilter
       .map((p: any) => {
         // Normaliza o Sub ID priorizando o valor vindo do banco ou da planilha
         const subIdValue = p.sub_id || p.subId || p.subid || p["Sub ID"] || p["Sub-ID"];
@@ -664,6 +664,21 @@ export default function Dashboard() {
           p.subId?.toLowerCase().includes(search)
         );
       });
+
+    // Ordenar: primeiro os que têm Sub ID (diferente de "-"), depois organizar alfabeticamente por Sub ID
+    return products.sort((a: any, b: any) => {
+      const aHasSubId = a.subId && a.subId !== "-";
+      const bHasSubId = b.subId && b.subId !== "-";
+
+      if (aHasSubId && !bHasSubId) return -1;
+      if (!aHasSubId && bHasSubId) return 1;
+      
+      if (aHasSubId && bHasSubId) {
+        return a.subId.localeCompare(b.subId);
+      }
+      
+      return 0;
+    });
   }, [stats?.salesData, localProducts, searchTerm]);
 
   const deleteBatchMutation = useMutation({
