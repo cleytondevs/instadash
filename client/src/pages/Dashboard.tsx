@@ -69,7 +69,7 @@ export default function Dashboard() {
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
   const [isConnectingFb, setIsConnectingFb] = useState(false);
 
-  const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("weekly");
+  const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("today");
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
 
   const { data: stats, isLoading } = useQuery<any>({
@@ -1145,7 +1145,7 @@ export default function Dashboard() {
                  onChange={(e) => setSearchTerm(e.target.value)}
                />
              </div>
-             {searchTerm && (
+             {searchTerm && timeFilter === "today" && (
                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto">
                  {campaignSheets?.includes(searchTerm.trim()) ? (
                    <Link href={`/campaign/${encodeURIComponent(searchTerm.trim())}`}>
