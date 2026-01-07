@@ -1062,21 +1062,28 @@ export default function Dashboard() {
                  onChange={(e) => setSearchTerm(e.target.value)}
                />
              </div>
-             <Dialog>
-               <DialogTrigger asChild>
-                 <Button variant="outline" className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm">
-                   <Plus className="w-4 h-4 mr-2" />
-                   Adicionar Custo
-                 </Button>
-               </DialogTrigger>
-               <DialogContent className="w-[95vw] rounded-2xl">
-                 <DialogHeader>
-                   <DialogTitle>Nova Despesa</DialogTitle>
-                   <DialogDescription>Lance custos operacionais ou de anúncios para cálculo de lucro.</DialogDescription>
-                 </DialogHeader>
-                 {/* Form simplificado aqui futuramente */}
-               </DialogContent>
-             </Dialog>
+             {searchTerm && (
+               <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto">
+                 {campaignSheets?.includes(searchTerm) ? (
+                   <Link href={`/campaign/${encodeURIComponent(searchTerm)}`}>
+                     <Button variant="outline" className="h-10 sm:h-11 rounded-xl font-bold px-6 border-blue-200 text-blue-600 hover:bg-blue-50 w-full sm:w-auto">
+                       <Plus className="w-4 h-4 mr-2" />
+                       Adicionar à Planilha: {searchTerm}
+                     </Button>
+                   </Link>
+                 ) : (
+                   <Button 
+                     variant="outline" 
+                     className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm"
+                     onClick={() => createCampaignMutation.mutate(searchTerm)}
+                     disabled={createCampaignMutation.isPending}
+                   >
+                     <Plus className="w-4 h-4 mr-2" />
+                     Criar Planilha: {searchTerm}
+                   </Button>
+                 )}
+               </div>
+             )}
           </div>
         </div>
 
