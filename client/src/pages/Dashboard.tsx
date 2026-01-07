@@ -98,9 +98,6 @@ export default function Dashboard() {
         }
 
         const { data: salesData, error: salesError } = await query;
-        console.log("Amostra de venda (Primeira):", salesData?.[0]);
-        console.log("Amostra de venda (Chaves):", salesData?.[0] ? Object.keys(salesData[0]) : "Vazio");
-        console.log("Amostra de venda (Sub ID):", salesData?.[0] ? (salesData[0].sub_id || salesData[0].subId || salesData[0].subid || "não encontrado") : "Sem dados");
         const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*");
 
         if (salesError || expensesError) {
@@ -207,6 +204,7 @@ export default function Dashboard() {
               revenue: s.revenue,
               clicks: s.clicks,
               source: s.source,
+              sub_id: s.subId,
               order_date: s.orderDate,
               batch_id: batchId
             })),
@@ -266,18 +264,19 @@ export default function Dashboard() {
 
         const sales: any[] = results.data.map((row: any) => {
           const getVal = (possibleKeys: string[]) => {
+            // First try exact or includes on keys
             for (const key of possibleKeys) {
               const cleanKey = key.toLowerCase().trim();
               const foundKey = Object.keys(row).find(k => {
                 const kClean = k.toLowerCase().trim();
                 return kClean === cleanKey || kClean.includes(cleanKey);
               });
-              if (foundKey) return row[foundKey];
+              if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) return row[foundKey];
             }
             return null;
           };
 
-          const subId = getVal(["Sub ID", "Sub-ID", "Sub_ID"]);
+          const subId = getVal(["Sub ID", "Sub-ID", "Sub_ID", "Subid", "sub_id", "subid"]);
           const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência", "Order No."]);
           const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount", "Total"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
@@ -543,7 +542,7 @@ export default function Dashboard() {
     
     return dataToFilter
       .map((p: any) => {
-        const subIdValue = p.sub_id || p.subId || p.subid || p["Sub ID"] || p["Sub-ID"] || p.sub_id_venda;
+        const subIdValue = p.subId || p.sub_id || p.subid || p["Sub ID"] || p["Sub-ID"];
         return {
           productName: p.product_name || p.productName || p.Nome || p.Product,
           orderId: p.order_id || p.orderId || p.ID || p["Order ID"],

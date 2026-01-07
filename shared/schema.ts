@@ -22,6 +22,7 @@ export const sales = pgTable("sales", {
   productName: text("product_name"),
   orderDate: date("order_date").notNull(),
   source: text("source").notNull(), // 'shopee_video' or 'social_media'
+  subId: text("sub_id"), // Identificador de rastreamento
   revenue: integer("revenue").notNull(), // In cents
   clicks: integer("clicks").default(0),
   batchId: text("batch_id"), // Identificador único do upload
