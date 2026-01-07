@@ -1239,6 +1239,17 @@ export default function Dashboard() {
                     </TableCell>
                   </TableRow>
                 )}
+                {searchTerm && filteredProducts.length > 0 && (
+                  <TableRow className="bg-gray-50/50 border-t-2 border-gray-100">
+                    <TableCell colSpan={3} className="text-xs font-black text-gray-900 uppercase tracking-wider">Total Filtrado</TableCell>
+                    <TableCell className="text-right font-black text-[#EE4D2D]">
+                      {formatCurrency(filteredProducts.reduce((sum: number, p: any) => sum + p.revenue, 0))}
+                    </TableCell>
+                    <TableCell className="text-right font-black text-gray-900">
+                      {filteredProducts.reduce((sum: number, p: any) => sum + p.clicks, 0)}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
