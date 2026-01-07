@@ -1227,7 +1227,7 @@ export default function Dashboard() {
                         <span className="font-bold text-[#EE4D2D]">
                           {formatCurrency(product.revenue)}
                         </span>
-                        {product.subId !== "-" && (
+                        {product.subId !== "-" && timeFilter === "today" && (
                           campaignSheets?.includes(product.subId) ? (
                             <Link href={`/campaign/${encodeURIComponent(product.subId)}`}>
                               <Button variant="outline" size="sm" className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50">
@@ -1235,16 +1235,14 @@ export default function Dashboard() {
                               </Button>
                             </Link>
                           ) : (
-                            timeFilter === "today" && (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs border-gray-200 text-gray-600 hover:bg-gray-50"
-                                onClick={() => setSubIdForNewCampaign(product.subId)}
-                              >
-                                Criar Planilha
-                              </Button>
-                            )
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 text-xs border-gray-200 text-gray-600 hover:bg-gray-50"
+                              onClick={() => setSubIdForNewCampaign(product.subId)}
+                            >
+                              Criar Planilha
+                            </Button>
                           )
                         )}
                       </div>
