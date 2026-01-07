@@ -70,7 +70,8 @@ export default function CampaignDetails() {
           .insert([{
             campaign_sheet_id: campaign.id,
             amount: amountCents,
-            date: date
+            date: date,
+            is_manual: true
           }]);
         if (error) throw error;
       } else {
@@ -83,7 +84,8 @@ export default function CampaignDetails() {
             order_date: date,
             product_name: "Lançamento Manual",
             source: "social_media",
-            order_id: `manual_${Date.now()}`
+            order_id: `manual_${Date.now()}`,
+            is_manual: true
           }]);
         if (error) throw error;
       }

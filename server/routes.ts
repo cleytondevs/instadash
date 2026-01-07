@@ -80,7 +80,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       const salesList = z.array(insertSaleSchema).parse(req.body);
-      await storage.bulkCreateSales(salesList.map(s => ({ ...s, userId: "default-user" })), true);
+      await storage.bulkCreateSales(salesList.map(s => ({ ...s, userId: "default-user", isManual: false })), true);
       res.status(201).json({ message: "Sales imported successfully" });
     } catch (err) {
       console.error("Bulk sales error:", err);
