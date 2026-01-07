@@ -716,11 +716,11 @@ export default function Dashboard() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
-                    {trackedLinks?.filter(l => campaignSheets?.includes(l.subId)).map((link: any) => (
-                      <Link key={link.id} href={`/campaign/${encodeURIComponent(link.subId)}`}>
+                    {campaignSheets?.map((sheetSubId: string) => (
+                      <Link key={sheetSubId} href={`/campaign/${encodeURIComponent(sheetSubId)}`}>
                         <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
                           <div className="min-w-0">
-                            <p className="text-sm font-bold truncate">{link.subId}</p>
+                            <p className="text-sm font-bold truncate">{sheetSubId}</p>
                             <p className="text-[10px] text-gray-500">Toque para gerenciar</p>
                           </div>
                           <TrendingUp className="w-4 h-4 text-emerald-500" />
@@ -770,11 +770,11 @@ export default function Dashboard() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
-                {trackedLinks?.filter(l => campaignSheets?.includes(l.subId)).map((link: any) => (
-                  <Link key={link.id} href={`/campaign/${encodeURIComponent(link.subId)}`}>
+                {campaignSheets?.map((sheetSubId: string) => (
+                  <Link key={sheetSubId} href={`/campaign/${encodeURIComponent(sheetSubId)}`}>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="min-w-0">
-                        <p className="text-sm font-bold truncate">{link.subId}</p>
+                        <p className="text-sm font-bold truncate">{sheetSubId}</p>
                         <p className="text-[10px] text-gray-500">Toque para gerenciar</p>
                       </div>
                       <TrendingUp className="w-4 h-4 text-emerald-500" />
