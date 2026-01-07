@@ -542,12 +542,14 @@ export default function Dashboard() {
       .map((p: any) => ({
         productName: p.product_name || p.productName,
         orderId: p.order_id || p.orderId,
+        subId: p.sub_id || p.subId,
         revenue: p.revenue,
         clicks: p.clicks
       }))
       .filter((p: any) => 
         p.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.orderId?.toLowerCase().includes(searchTerm.toLowerCase())
+        p.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.subId?.toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [stats?.salesData, localProducts, searchTerm]);
 
@@ -1023,15 +1025,17 @@ export default function Dashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs font-bold uppercase tracking-wider">Produto</TableHead>
+                  <TableHead className="text-xs font-bold uppercase tracking-wider">Sub ID</TableHead>
                   <TableHead className="text-xs font-bold uppercase tracking-wider">ID Pedido</TableHead>
                   <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Receita</TableHead>
                   <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Cliques</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product, index) => (
+                {filteredProducts.map((product: any, index: number) => (
                   <TableRow key={index} className="hover:bg-gray-50/50">
                     <TableCell className="text-xs font-medium max-w-[200px] truncate">{product.productName}</TableCell>
+                    <TableCell className="text-[10px] font-bold text-blue-600">{product.subId || "-"}</TableCell>
                     <TableCell className="text-[10px] font-mono text-gray-400">{product.orderId}</TableCell>
                     <TableCell className="text-xs font-bold text-gray-900 text-right">{formatCurrency(product.revenue)}</TableCell>
                     <TableCell className="text-xs font-medium text-gray-500 text-right">{product.clicks}</TableCell>
@@ -1039,7 +1043,7 @@ export default function Dashboard() {
                 ))}
                 {filteredProducts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-gray-400 text-xs">
+                    <TableCell colSpan={5} className="h-24 text-center text-gray-400 text-xs">
                       {searchTerm ? "Nenhum produto encontrado para sua busca." : "Nenhum dado de produto disponível."}
                     </TableCell>
                   </TableRow>
