@@ -108,7 +108,10 @@ export default function CampaignDetails() {
             date: date,
             is_manual: true
           }]);
-        if (error) throw error;
+        if (error) {
+          console.error("Erro Supabase (Expenses):", error);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from("sales")
@@ -122,7 +125,10 @@ export default function CampaignDetails() {
             order_id: `manual_${Date.now()}`,
             is_manual: true
           }]);
-        if (error) throw error;
+        if (error) {
+          console.error("Erro Supabase (Sales):", error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {
