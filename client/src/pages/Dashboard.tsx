@@ -22,7 +22,8 @@ import {
   Settings,
   Facebook,
   Package,
-  PieChart
+  PieChart,
+  MousePointerClick
 } from "lucide-react";
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -1004,13 +1005,13 @@ export default function Dashboard() {
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-1 pt-4 px-5">
               <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                Custos
+                <MousePointerClick className="w-3.5 h-3.5 text-orange-500" />
+                Cliques Shopee
               </CardTitle>
             </CardHeader>
             <CardContent className="px-5 pb-5">
-              <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalExpenses || 0)}</div>
-              <p className="text-[10px] text-gray-400 font-medium mt-1">Despesas e anúncios</p>
+              <div className="text-2xl sm:text-3xl font-black text-gray-900">{stats?.totalClicks || 0}</div>
+              <p className="text-[10px] text-gray-400 font-medium mt-1">Cliques nos produtos</p>
             </CardContent>
           </Card>
 
