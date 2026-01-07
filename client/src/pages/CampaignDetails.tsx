@@ -200,14 +200,82 @@ export default function CampaignDetails() {
 
       <main className="max-w-4xl mx-auto p-4 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* ... existing cards ... */}
+          <Card className="bg-green-50 border-green-100">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-600 font-medium">Faturamento</p>
+                <TrendingUp className="w-4 h-4 text-green-500" />
+              </div>
+              <p className="text-2xl font-bold text-green-700">R$ {(totalRevenue / 100).toFixed(2)}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-red-50 border-red-100">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-red-600 font-medium">Gastos</p>
+                <TrendingDown className="w-4 h-4 text-red-500" />
+              </div>
+              <p className="text-2xl font-bold text-red-700">R$ {(totalExpenses / 100).toFixed(2)}</p>
+            </CardContent>
+          </Card>
+          <Card className={`${netProfit >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Lucro Líquido</p>
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                R$ {(netProfit / 100).toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-black">Lançamento Manual</CardTitle>
           </CardHeader>
-          {/* ... existing content ... */}
+          <CardContent className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-[0.5] space-y-1">
+              <label className="text-[10px] font-bold uppercase text-gray-400">Tipo</label>
+              <select 
+                value={entryType}
+                onChange={(e) => setEntryType(e.target.value as "gain" | "expense")}
+                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="expense">Gasto</option>
+                <option value="gain">Ganho</option>
+              </select>
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className="text-[10px] font-bold uppercase text-gray-400">Valor</label>
+              <Input 
+                type="number" 
+                placeholder="0,00" 
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)}
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className="text-[10px] font-bold uppercase text-gray-400">Data</label>
+              <Input 
+                type="date" 
+                value={date} 
+                onChange={(e) => setDate(e.target.value)}
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => addEntryMutation.mutate()} 
+                disabled={addEntryMutation.isPending}
+                className={`h-11 rounded-xl px-8 font-bold ${entryType === 'expense' ? 'bg-[#EE4D2D] hover:bg-[#D73211]' : 'bg-green-600 hover:bg-green-700'}`}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Adicionar
+              </Button>
+            </div>
+          </CardContent>
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
