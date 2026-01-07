@@ -93,8 +93,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {
-    const userSales = await this.getSales(userId);
-    const userExpenses = await this.getExpenses(userId);
+    const userSales = await db.select().from(sales).where(and(eq(sales.userId, userId), eq(sales.isManual, false)));
+    const userExpenses = await db.select().from(expenses).where(and(eq(expenses.userId, userId), eq(expenses.isManual, false)));
 
     const videoRevenue = userSales
       .filter(s => s.source === 'shopee_video')

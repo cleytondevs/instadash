@@ -26,6 +26,7 @@ export const sales = pgTable("sales", {
   revenue: integer("revenue").notNull(), // In cents
   clicks: integer("clicks").default(0),
   batchId: text("batch_id"), // Identificador único do upload
+  isManual: boolean("is_manual").default(false).notNull(),
   uploadDate: timestamp("upload_date").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -36,6 +37,7 @@ export const expenses = pgTable("expenses", {
   date: date("date").notNull(),
   amount: integer("amount").notNull(), // In cents
   description: text("description"),
+  isManual: boolean("is_manual").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
