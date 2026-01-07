@@ -15,8 +15,9 @@ export default function CampaignDetails() {
   const [, params] = useRoute("/campaign/:subId");
   const subId = decodeURIComponent(params?.subId || "");
   const { toast } = useToast();
-  const [expenseAmount, setExpenseAmount] = useState("");
-  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [entryType, setEntryType] = useState<"gain" | "expense">("expense");
 
   const { data: campaign, isLoading: loadingCampaign } = useQuery({
     queryKey: ["campaign-sheet", subId],
@@ -58,25 +59,41 @@ export default function CampaignDetails() {
     }
   });
 
-  const addExpenseMutation = useMutation({
+  const addEntryMutation = useMutation({
     mutationFn: async () => {
       if (!campaign) throw new Error("Campanha não encontrada");
-      const amountCents = Math.floor(parseFloat(expenseAmount) * 100);
-      const { data, error } = await supabase
-        .from("campaign_expenses")
-        .insert([{
-          campaign_sheet_id: campaign.id,
-          amount: amountCents,
-          date: expenseDate
-        }]);
-      if (error) throw error;
-      return data;
+      const amountCents = Math.floor(parseFloat(amount) * 100);
+      
+      if (entryType === "expense") {
+        const { error } = await supabase
+          .from("campaign_expenses")
+          .insert([{
+            campaign_sheet_id: campaign.id,
+            amount: amountCents,
+            date: date
+          }]);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("sales")
+          .insert([{
+            user_id: "default-user",
+            sub_id: subId,
+            revenue: amountCents,
+            order_date: date,
+            product_name: "Lançamento Manual",
+            source: "social_media",
+            order_id: `manual_${Date.now()}`
+          }]);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-sheet", subId] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-sales", subId] });
       queryClient.invalidateQueries({ queryKey: ["campaign-sheets-stats"] });
-      setExpenseAmount("");
-      toast({ title: "Sucesso", description: "Gasto adicionado." });
+      setAmount("");
+      toast({ title: "Sucesso", description: `${entryType === "expense" ? "Gasto" : "Ganho"} adicionado.` });
     }
   });
 
@@ -179,16 +196,27 @@ export default function CampaignDetails() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-black">Lançar Novo Gasto</CardTitle>
+            <CardTitle className="text-lg font-black">Lançamento Manual</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-[0.5] space-y-1">
+              <label className="text-[10px] font-bold uppercase text-gray-400">Tipo</label>
+              <select 
+                value={entryType}
+                onChange={(e) => setEntryType(e.target.value as "gain" | "expense")}
+                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="expense">Gasto</option>
+                <option value="gain">Ganho</option>
+              </select>
+            </div>
             <div className="flex-1 space-y-1">
               <label className="text-[10px] font-bold uppercase text-gray-400">Valor</label>
               <Input 
                 type="number" 
                 placeholder="0,00" 
-                value={expenseAmount} 
-                onChange={(e) => setExpenseAmount(e.target.value)}
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)}
                 className="h-11 rounded-xl"
               />
             </div>
@@ -196,16 +224,16 @@ export default function CampaignDetails() {
               <label className="text-[10px] font-bold uppercase text-gray-400">Data</label>
               <Input 
                 type="date" 
-                value={expenseDate} 
-                onChange={(e) => setExpenseDate(e.target.value)}
+                value={date} 
+                onChange={(e) => setDate(e.target.value)}
                 className="h-11 rounded-xl"
               />
             </div>
             <div className="flex items-end">
               <Button 
-                onClick={() => addExpenseMutation.mutate()} 
-                disabled={addExpenseMutation.isPending}
-                className="h-11 rounded-xl px-8 bg-[#EE4D2D] hover:bg-[#D73211] font-bold"
+                onClick={() => addEntryMutation.mutate()} 
+                disabled={addEntryMutation.isPending}
+                className={`h-11 rounded-xl px-8 font-bold ${entryType === 'expense' ? 'bg-[#EE4D2D] hover:bg-[#D73211]' : 'bg-green-600 hover:bg-green-700'}`}
               >
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
