@@ -61,6 +61,36 @@ import Papa from "papaparse";
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+
+  // Check for session on mount
+  useMemo(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) toast({ variant: "destructive", title: "Erro no Login", description: error.message });
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Sessão encerrada" });
+  };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -76,8 +106,9 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<any>({
     queryKey: ["dashboard-stats", timeFilter],
     queryFn: async () => {
+      if (!user) return null;
       try {
-        let query = supabase.from("sales").select("*");
+        let query = supabase.from("sales").select("*").eq("user_id", user.id);
         
         const now = new Date();
         if (timeFilter === "today") {
@@ -99,7 +130,7 @@ export default function Dashboard() {
         }
 
         const { data: salesData, error: salesError } = await query;
-        const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*");
+        const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*").eq("user_id", user.id);
 
         if (salesError || expensesError) {
           console.error("Erro na busca de dados (Supabase):", salesError || expensesError);
@@ -199,7 +230,7 @@ export default function Dashboard() {
           .from("sales")
           .upsert(
             sales.map(s => ({
-              user_id: "default-user",
+              user_id: user.id,
               order_id: s.orderId,
               product_name: s.productName,
               revenue: s.revenue,
@@ -392,11 +423,13 @@ export default function Dashboard() {
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
 
   const { data: trackedLinks, refetch: refetchLinks } = useQuery<any[]>({
-    queryKey: ["tracked-links"],
+    queryKey: ["tracked-links", user?.id],
     queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from("tracked_links")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -433,7 +466,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from("tracked_links")
         .insert([{
-          user_id: "default-user",
+          user_id: user.id,
           original_url: newLink.originalUrl,
           tracked_url: newLink.trackedUrl,
           sub_id: newLink.subId
@@ -613,10 +646,11 @@ export default function Dashboard() {
   });
 
   const { data: campaignSheets } = useQuery({
-    queryKey: ["campaign-sheets"],
+    queryKey: ["campaign-sheets", user?.id],
     queryFn: async () => {
+      if (!user) return [];
       console.log("Fetching campaign sheets from Supabase...");
-      const { data, error } = await supabase.from("campaign_sheets").select("sub_id");
+      const { data, error } = await supabase.from("campaign_sheets").select("sub_id").eq("user_id", user.id);
       if (error) {
         console.error("Supabase Error (campaign_sheets):", error);
         throw error;
@@ -747,6 +781,26 @@ export default function Dashboard() {
 
   if (isLoading) return <DashboardSkeleton />;
 
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center font-black">Bem-vindo ao InstaDash</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-center text-muted-foreground font-medium">
+              Faça login para acessar seus dados individuais e gerenciar suas vendas.
+            </p>
+            <Button onClick={handleLogin} className="w-full bg-[#EE4D2D] hover:bg-[#D73211] font-bold h-12 rounded-xl" size="lg">
+              Entrar com Google
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 sm:pb-20 font-sans">
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
@@ -755,11 +809,17 @@ export default function Dashboard() {
             <div className="w-8 h-8 flex-shrink-0 bg-[#EE4D2D] rounded-lg flex items-center justify-center shadow-md">
               <BarChart3 className="text-white w-5 h-5" />
             </div>
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-              InstaDash <span className="text-[#EE4D2D] font-normal hidden sm:inline">Shopee</span>
-            </h1>
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-gray-900 truncate">
+                InstaDash <span className="text-[#EE4D2D] font-normal hidden sm:inline">Shopee</span>
+              </h1>
+              <p className="text-[10px] text-gray-400 truncate font-medium">{user.email}</p>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-500 font-bold hover:text-red-500">
+              Sair
+            </Button>
             <input 
               type="file" 
               accept=".csv" 
