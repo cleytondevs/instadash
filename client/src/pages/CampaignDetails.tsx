@@ -331,19 +331,40 @@ export default function CampaignDetails() {
                           R$ {(balance / 100).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {(manualExpense || manualGain) && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
-                              onClick={() => {
-                                if (manualExpense) deleteEntryMutation.mutate({ id: manualExpense.id, type: "expense" });
-                                if (manualGain) deleteEntryMutation.mutate({ id: manualGain.id, type: "gain" });
-                              }}
-                            >
-                              <Plus className="w-4 h-4 rotate-45" />
-                            </Button>
-                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={async () => {
+                              // Deleta todos os gastos dessa data para este sub_id
+                              const { data: exps } = await supabase
+                                .from("campaign_expenses")
+                                .select("id")
+                                .eq("campaign_sheet_id", campaign.id)
+                                .eq("date", date);
+                              
+                              if (exps) {
+                                for (const exp of exps) {
+                                  await deleteEntryMutation.mutateAsync({ id: exp.id, type: "expense" });
+                                }
+                              }
+
+                              // Deleta todas as vendas dessa data para este sub_id
+                              const { data: sls } = await supabase
+                                .from("sales")
+                                .select("id")
+                                .eq("sub_id", subId)
+                                .eq("order_date", date);
+
+                              if (sls) {
+                                for (const sale of sls) {
+                                  await deleteEntryMutation.mutateAsync({ id: sale.id, type: "gain" });
+                                }
+                              }
+                            }}
+                          >
+                            <Plus className="w-4 h-4 rotate-45" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
