@@ -1270,13 +1270,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Seção de Categorias - Responsivo */}
-        {(stats as any)?.chartData?.length > 0 && (
+        {/* Seção de Sub IDs - Gráfico de Pizza */}
+        {campaignStats && campaignStats.length > 0 && (
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl sm:rounded-3xl">
             <CardHeader className="px-6 sm:px-8 pt-6 sm:pt-8">
               <CardTitle className="text-base sm:text-xl font-black text-gray-800 flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-[#EE4D2D]" />
-                Mix de Vendas
+                Vendas por Sub ID
               </CardTitle>
             </CardHeader>
             <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
@@ -1285,7 +1285,7 @@ export default function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
-                        data={(stats?.chartData) || []}
+                        data={campaignStats.map(s => ({ name: s.subId, value: s.revenue }))}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -1293,22 +1293,22 @@ export default function Dashboard() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {((stats?.chartData) || []).map((entry: any, index: number) => (
+                        {campaignStats.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5]} />
                         ))}
                       </Pie>
-                      <RechartsTooltip />
+                      <RechartsTooltip formatter={(value: number) => formatCurrency(value)} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
                 <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 w-full">
-                  {((stats?.chartData) || []).map((item: any, index: number) => (
+                  {campaignStats.map((item: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5] }} />
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-600 truncate">{item.name}</span>
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-600 truncate">{item.subId}</span>
                       </div>
-                      <span className="text-xs sm:text-sm font-black text-gray-900 shrink-0">{item.value}</span>
+                      <span className="text-xs sm:text-sm font-black text-gray-900 shrink-0">{formatCurrency(item.revenue)}</span>
                     </div>
                   ))}
                 </div>
