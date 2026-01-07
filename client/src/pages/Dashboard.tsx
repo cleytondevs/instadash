@@ -76,7 +76,23 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authMode === "signup") {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) toast({ variant: "destructive", title: "Erro no Cadastro", description: error.message });
+      else toast({ title: "Sucesso!", description: "Verifique seu e-mail para confirmar o cadastro." });
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) toast({ variant: "destructive", title: "Erro no Login", description: error.message });
+    }
+  };
+
+  const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -783,18 +799,61 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center font-black">Bem-vindo ao InstaDash</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <p className="text-center text-muted-foreground font-medium">
-              Faça login para acessar seus dados individuais e gerenciar suas vendas.
-            </p>
-            <Button onClick={handleLogin} className="w-full bg-[#EE4D2D] hover:bg-[#D73211] font-bold h-12 rounded-xl" size="lg">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#F8FAFC]">
+        <Card className="w-full max-w-md border-none shadow-xl rounded-3xl overflow-hidden">
+          <div className="bg-[#EE4D2D] p-8 flex flex-col items-center gap-4 text-white">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+              <BarChart3 className="w-10 h-10" />
+            </div>
+            <CardTitle className="text-3xl font-black">InstaDash</CardTitle>
+          </div>
+          <CardContent className="p-8 space-y-6">
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase text-gray-400">E-mail</Label>
+                <Input 
+                  type="email" 
+                  placeholder="seu@email.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-xl h-12"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase text-gray-400">Senha</Label>
+                <Input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="rounded-xl h-12"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full bg-[#EE4D2D] hover:bg-[#D73211] font-bold h-12 rounded-xl">
+                {authMode === "login" ? "Entrar" : "Criar Conta"}
+              </Button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t"></span></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400 font-bold">Ou</span></div>
+            </div>
+
+            <Button onClick={handleGoogleLogin} variant="outline" className="w-full font-bold h-12 rounded-xl border-gray-200">
               Entrar com Google
             </Button>
+
+            <p className="text-center text-sm text-gray-400 font-medium">
+              {authMode === "login" ? "Não tem conta?" : "Já tem conta?"}
+              <button 
+                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+                className="ml-1 text-[#EE4D2D] font-bold hover:underline"
+              >
+                {authMode === "login" ? "Cadastre-se" : "Faça Login"}
+              </button>
+            </p>
           </CardContent>
         </Card>
       </div>
