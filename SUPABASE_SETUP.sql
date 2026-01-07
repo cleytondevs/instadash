@@ -1,18 +1,18 @@
 -- COPIE E COLE ESTE SCRIPT NO "SQL EDITOR" DO SEU SUPABASE
--- ISSO VAI CRIAR AS TABELAS CORRETAMENTE PARA O INSTADASH
+-- ISSO VAI CRIAR AS TABELAS CORRETAMENTE E HABILITAR A SEGURANÇA POR USUÁRIO (RLS)
 
 -- 1. Tabela de Vendas (Sales)
 CREATE TABLE IF NOT EXISTS sales (
     id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL DEFAULT 'default-user',
+    user_id UUID DEFAULT auth.uid(), -- Vinculado ao Supabase Auth
     order_id TEXT NOT NULL UNIQUE,
     product_name TEXT,
     order_date DATE NOT NULL,
-    source TEXT NOT NULL, -- 'shopee_video' ou 'social_media'
-    revenue INTEGER NOT NULL, -- Valor em centavos (ex: 1000 = R$ 10,00)
+    source TEXT NOT NULL,
+    revenue INTEGER NOT NULL,
     clicks INTEGER DEFAULT 0,
     sub_id TEXT,
-    batch_id TEXT, -- Identificador do upload para exclusão em lote
+    batch_id TEXT,
     upload_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -20,27 +20,17 @@ CREATE TABLE IF NOT EXISTS sales (
 -- 2. Tabela de Despesas (Expenses)
 CREATE TABLE IF NOT EXISTS expenses (
     id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL DEFAULT 'default-user',
+    user_id UUID DEFAULT auth.uid(),
     date DATE NOT NULL,
-    amount INTEGER NOT NULL, -- Valor em centavos
+    amount INTEGER NOT NULL,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Tabela de Usuários (Opcional se usar Supabase Auth, mas mantida para compatibilidade)
-CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-    username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
-    fb_app_id TEXT,
-    fb_app_secret TEXT,
-    fb_access_token TEXT
-);
-
--- 4. Tabela de Links Rastreados (Tracked Links)
+-- 3. Tabela de Links Rastreados (Tracked Links)
 CREATE TABLE IF NOT EXISTS tracked_links (
     id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    user_id UUID DEFAULT auth.uid(),
     original_url TEXT NOT NULL,
     tracked_url TEXT NOT NULL,
     sub_id TEXT,
@@ -48,16 +38,16 @@ CREATE TABLE IF NOT EXISTS tracked_links (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- 5. Campaign Sheets table
+-- 4. Tabela de Planilhas de Campanha (Campaign Sheets)
 CREATE TABLE IF NOT EXISTS campaign_sheets (
     id SERIAL PRIMARY KEY,
+    user_id UUID DEFAULT auth.uid(),
     sub_id TEXT UNIQUE NOT NULL,
     title TEXT,
-    user_id TEXT NOT NULL DEFAULT 'default-user',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- 6. Campaign Expenses table
+-- 5. Tabela de Gastos de Campanha (Campaign Expenses)
 CREATE TABLE IF NOT EXISTS campaign_expenses (
     id SERIAL PRIMARY KEY,
     campaign_sheet_id INTEGER REFERENCES campaign_sheets(id) ON DELETE CASCADE,
@@ -67,21 +57,37 @@ CREATE TABLE IF NOT EXISTS campaign_expenses (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- Habilitar acesso público (apenas para teste inicial, considere RLS depois)
+-- CONFIGURAÇÃO DE SEGURANÇA (RLS)
+-- Isso garante que um usuário só veja os SEUS próprios dados.
+
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access" ON sales FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own sales" ON sales;
+CREATE POLICY "Users can manage their own sales" ON sales 
+FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access" ON expenses FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own expenses" ON expenses;
+CREATE POLICY "Users can manage their own expenses" ON expenses 
+FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 ALTER TABLE tracked_links ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access" ON tracked_links FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access" ON users FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own links" ON tracked_links;
+CREATE POLICY "Users can manage their own links" ON tracked_links 
+FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 ALTER TABLE campaign_sheets ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access" ON campaign_sheets FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own campaign sheets" ON campaign_sheets;
+CREATE POLICY "Users can manage their own campaign sheets" ON campaign_sheets 
+FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+-- Para campaign_expenses, a segurança vem através da relação com campaign_sheets
 ALTER TABLE campaign_expenses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access" ON campaign_expenses FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own campaign expenses" ON campaign_expenses;
+CREATE POLICY "Users can manage their own campaign expenses" ON campaign_expenses 
+FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM campaign_sheets 
+    WHERE id = campaign_expenses.campaign_sheet_id 
+    AND user_id = auth.uid()
+  )
+);
