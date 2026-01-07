@@ -4,7 +4,7 @@
 -- 1. Tabela de Vendas (Sales)
 CREATE TABLE IF NOT EXISTS sales (
     id SERIAL PRIMARY KEY,
-    user_id UUID DEFAULT auth.uid(), -- Vinculado ao Supabase Auth
+    user_id UUID, 
     order_id TEXT NOT NULL UNIQUE,
     product_name TEXT,
     order_date DATE NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS sales (
 -- 2. Tabela de Despesas (Expenses)
 CREATE TABLE IF NOT EXISTS expenses (
     id SERIAL PRIMARY KEY,
-    user_id UUID DEFAULT auth.uid(),
+    user_id UUID,
     date DATE NOT NULL,
     amount INTEGER NOT NULL,
     description TEXT,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS expenses (
 -- 3. Tabela de Links Rastreados (Tracked Links)
 CREATE TABLE IF NOT EXISTS tracked_links (
     id SERIAL PRIMARY KEY,
-    user_id UUID DEFAULT auth.uid(),
+    user_id UUID,
     original_url TEXT NOT NULL,
     tracked_url TEXT NOT NULL,
     sub_id TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS tracked_links (
 -- 4. Tabela de Planilhas de Campanha (Campaign Sheets)
 CREATE TABLE IF NOT EXISTS campaign_sheets (
     id SERIAL PRIMARY KEY,
-    user_id UUID DEFAULT auth.uid(),
+    user_id UUID,
     sub_id TEXT UNIQUE NOT NULL,
     title TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
@@ -63,22 +63,22 @@ CREATE TABLE IF NOT EXISTS campaign_expenses (
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own sales" ON sales;
 CREATE POLICY "Users can manage their own sales" ON sales 
-FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+FOR ALL USING (auth.uid() = user_id);
 
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own expenses" ON expenses;
 CREATE POLICY "Users can manage their own expenses" ON expenses 
-FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+FOR ALL USING (auth.uid() = user_id);
 
 ALTER TABLE tracked_links ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own links" ON tracked_links;
 CREATE POLICY "Users can manage their own links" ON tracked_links 
-FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+FOR ALL USING (auth.uid() = user_id);
 
 ALTER TABLE campaign_sheets ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own campaign sheets" ON campaign_sheets;
 CREATE POLICY "Users can manage their own campaign sheets" ON campaign_sheets 
-FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+FOR ALL USING (auth.uid() = user_id);
 
 -- Para campaign_expenses, a segurança vem através da relação com campaign_sheets
 ALTER TABLE campaign_expenses ENABLE ROW LEVEL SECURITY;
