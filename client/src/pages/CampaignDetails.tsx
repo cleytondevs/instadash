@@ -296,12 +296,13 @@ export default function CampaignDetails() {
                   <TableHead className="text-right font-bold text-red-500">Gastos</TableHead>
                   <TableHead className="text-right font-bold text-green-600">Ganhos</TableHead>
                   <TableHead className="text-right font-bold text-gray-900">Saldo</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {allDates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-12 text-gray-400 font-medium">
+                    <TableCell colSpan={5} className="text-center py-12 text-gray-400 font-medium">
                       Nenhuma movimentação registrada para este Sub ID.
                     </TableCell>
                   </TableRow>
@@ -310,6 +311,11 @@ export default function CampaignDetails() {
                     const gain = dailySales[date] || 0;
                     const loss = dailyExpenses[date] || 0;
                     const balance = gain - loss;
+                    
+                    // Encontrar IDs de lançamentos manuais para esta data
+                    const manualExpense = campaign?.campaign_expenses?.find((e: any) => e.date === date && e.is_manual);
+                    const manualGain = sales?.find((s: any) => new Date(s.order_date).toISOString().split('T')[0] === date && s.is_manual);
+
                     return (
                       <TableRow key={date} className="hover:bg-gray-50/50">
                         <TableCell className="font-medium text-gray-600">
@@ -323,6 +329,21 @@ export default function CampaignDetails() {
                         </TableCell>
                         <TableCell className={`text-right font-black ${balance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                           R$ {(balance / 100).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(manualExpense || manualGain) && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                if (manualExpense) deleteEntryMutation.mutate({ id: manualExpense.id, type: "expense" });
+                                if (manualGain) deleteEntryMutation.mutate({ id: manualGain.id, type: "gain" });
+                              }}
+                            >
+                              <Plus className="w-4 h-4 rotate-45" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -340,6 +361,7 @@ export default function CampaignDetails() {
                     <TableCell className={`text-right font-black ${netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                       R$ {(netProfit / 100).toFixed(2)}
                     </TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 )}
               </TableBody>
