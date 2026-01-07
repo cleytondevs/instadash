@@ -93,16 +93,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-    if (error) toast({ variant: "destructive", title: "Erro no Login", description: error.message });
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({ title: "Sessão encerrada" });
@@ -836,15 +826,6 @@ export default function Dashboard() {
                 {authMode === "login" ? "Entrar" : "Criar Conta"}
               </Button>
             </form>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t"></span></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400 font-bold">Ou</span></div>
-            </div>
-
-            <Button onClick={handleGoogleLogin} variant="outline" className="w-full font-bold h-12 rounded-xl border-gray-200">
-              Entrar com Google
-            </Button>
 
             <p className="text-center text-sm text-gray-400 font-medium">
               {authMode === "login" ? "Não tem conta?" : "Já tem conta?"}
