@@ -1235,14 +1235,16 @@ export default function Dashboard() {
                               </Button>
                             </Link>
                           ) : (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-7 text-xs border-gray-200 text-gray-600 hover:bg-gray-50"
-                              onClick={() => setSubIdForNewCampaign(product.subId)}
-                            >
-                              Criar Planilha
-                            </Button>
+                            timeFilter === "today" && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 text-xs border-gray-200 text-gray-600 hover:bg-gray-50"
+                                onClick={() => setSubIdForNewCampaign(product.subId)}
+                              >
+                                Criar Planilha
+                              </Button>
+                            )
                           )
                         )}
                       </div>
