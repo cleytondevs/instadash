@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   PieChart as RechartsPieChart,
   Pie,
