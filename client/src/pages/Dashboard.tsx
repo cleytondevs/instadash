@@ -264,14 +264,17 @@ export default function Dashboard() {
 
         const sales: any[] = results.data.map((row: any) => {
           const getVal = (possibleKeys: string[]) => {
-            // First try exact or includes on keys
+            // Normaliza chaves da planilha (remove espaços, minúsculas)
+            const rowKeys = Object.keys(row);
             for (const key of possibleKeys) {
-              const cleanKey = key.toLowerCase().trim();
-              const foundKey = Object.keys(row).find(k => {
-                const kClean = k.toLowerCase().trim();
-                return kClean === cleanKey || kClean.includes(cleanKey);
+              const cleanSearchKey = key.toLowerCase().replace(/[\s_-]/g, "");
+              const foundKey = rowKeys.find(k => {
+                const cleanK = k.toLowerCase().replace(/[\s_-]/g, "");
+                return cleanK === cleanSearchKey || cleanK.includes(cleanSearchKey);
               });
-              if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) return row[foundKey];
+              if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+                return row[foundKey];
+              }
             }
             return null;
           };
@@ -542,20 +545,24 @@ export default function Dashboard() {
     
     return dataToFilter
       .map((p: any) => {
-        const subIdValue = p.subId || p.sub_id || p.subid || p["Sub ID"] || p["Sub-ID"];
+        // Normaliza o Sub ID priorizando o valor vindo do banco ou da planilha
+        const subIdValue = p.sub_id || p.subId || p.subid || p["Sub ID"] || p["Sub-ID"];
         return {
           productName: p.product_name || p.productName || p.Nome || p.Product,
           orderId: p.order_id || p.orderId || p.ID || p["Order ID"],
-          subId: subIdValue && subIdValue !== "-" ? String(subIdValue) : "-",
+          subId: subIdValue && subIdValue !== "-" ? String(subIdValue).trim() : "-",
           revenue: p.revenue,
           clicks: p.clicks
         };
       })
-      .filter((p: any) => 
-        p.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.subId !== "-" && p.subId?.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      .filter((p: any) => {
+        const search = searchTerm.toLowerCase();
+        return (
+          p.productName?.toLowerCase().includes(search) ||
+          p.orderId?.toLowerCase().includes(search) ||
+          (p.subId !== "-" && p.subId?.toLowerCase().includes(search))
+        );
+      });
   }, [stats?.salesData, localProducts, searchTerm]);
 
   const deleteBatchMutation = useMutation({
