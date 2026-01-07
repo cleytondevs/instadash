@@ -49,6 +49,7 @@ export async function setupTables() {
         sub_id TEXT,
         order_date DATE,
         batch_id TEXT,
+        is_manual BOOLEAN DEFAULT FALSE,
         upload_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
@@ -60,6 +61,7 @@ export async function setupTables() {
         amount INTEGER NOT NULL,
         category TEXT,
         date DATE,
+        is_manual BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
       
@@ -87,6 +89,7 @@ export async function setupTables() {
         amount INTEGER NOT NULL,
         date DATE NOT NULL,
         description TEXT,
+        is_manual BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
       
@@ -104,6 +107,7 @@ export async function setupTables() {
         amount INTEGER NOT NULL,
         date DATE NOT NULL,
         description TEXT,
+        is_manual BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
 

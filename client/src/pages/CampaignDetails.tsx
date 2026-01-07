@@ -62,8 +62,11 @@ export default function CampaignDetails() {
   const addEntryMutation = useMutation({
     mutationFn: async () => {
       if (!campaign) throw new Error("Campanha não encontrada");
-      const amountCents = Math.floor(parseFloat(amount) * 100);
+      const val = amount.replace(',', '.');
+      const amountCents = Math.floor(parseFloat(val) * 100);
       
+      if (isNaN(amountCents)) throw new Error("Valor inválido");
+
       if (entryType === "expense") {
         const { error } = await supabase
           .from("campaign_expenses")
