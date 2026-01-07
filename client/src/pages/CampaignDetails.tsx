@@ -250,8 +250,8 @@ export default function CampaignDetails() {
               <TableHeader className="bg-gray-50/50">
                 <TableRow>
                   <TableHead className="font-bold text-gray-900">Data</TableHead>
-                  <TableHead className="text-right font-bold text-green-600">Ganhos</TableHead>
                   <TableHead className="text-right font-bold text-red-500">Gastos</TableHead>
+                  <TableHead className="text-right font-bold text-green-600">Ganhos</TableHead>
                   <TableHead className="text-right font-bold text-gray-900">Saldo</TableHead>
                 </TableRow>
               </TableHeader>
@@ -272,11 +272,11 @@ export default function CampaignDetails() {
                         <TableCell className="font-medium text-gray-600">
                           {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-green-600">
-                          R$ {(gain / 100).toFixed(2)}
-                        </TableCell>
                         <TableCell className="text-right font-bold text-red-500">
                           R$ {(loss / 100).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-green-600">
+                          R$ {(gain / 100).toFixed(2)}
                         </TableCell>
                         <TableCell className={`text-right font-black ${balance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                           R$ {(balance / 100).toFixed(2)}
@@ -288,11 +288,11 @@ export default function CampaignDetails() {
                 {allDates.length > 0 && (
                   <TableRow className="bg-gray-100/50 border-t-2 border-gray-200">
                     <TableCell className="font-black text-gray-900 uppercase tracking-wider">Total Geral</TableCell>
-                    <TableCell className="text-right font-black text-green-600">
-                      R$ {(totalRevenue / 100).toFixed(2)}
-                    </TableCell>
                     <TableCell className="text-right font-black text-red-500">
                       R$ {(totalExpenses / 100).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-black text-green-600">
+                      R$ {(totalRevenue / 100).toFixed(2)}
                     </TableCell>
                     <TableCell className={`text-right font-black ${netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                       R$ {(netProfit / 100).toFixed(2)}
