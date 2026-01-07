@@ -111,7 +111,7 @@ export default function Dashboard() {
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
 
   const { data: stats, isLoading } = useQuery<any>({
-    queryKey: ["dashboard-stats", timeFilter],
+    queryKey: ["dashboard-stats", timeFilter, user?.id],
     queryFn: async () => {
       if (!user) return null;
       try {
