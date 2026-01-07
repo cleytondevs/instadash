@@ -46,6 +46,7 @@ export async function setupTables() {
         revenue INTEGER NOT NULL,
         clicks INTEGER DEFAULT 0,
         source TEXT,
+        sub_id TEXT,
         order_date DATE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
@@ -58,6 +59,16 @@ export async function setupTables() {
         category TEXT,
         date DATE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      
+      CREATE TABLE IF NOT EXISTS tracked_links (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT REFERENCES users(id),
+        original_url TEXT NOT NULL,
+        tracked_url TEXT NOT NULL,
+        sub_id TEXT,
+        clicks INTEGER DEFAULT 0 NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
       
       -- Garantir que as tabelas sejam expostas no schema public para a API
