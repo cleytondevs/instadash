@@ -559,7 +559,7 @@ export default function Dashboard() {
         return (
           p.productName?.toLowerCase().includes(search) ||
           p.orderId?.toLowerCase().includes(search) ||
-          (p.subId !== "-" && p.subId?.toLowerCase().includes(search))
+          p.subId?.toLowerCase().includes(search)
         );
       });
   }, [stats?.salesData, localProducts, searchTerm]);
@@ -1005,7 +1005,7 @@ export default function Dashboard() {
              <div className="relative w-full sm:w-64">
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                <Input 
-                 placeholder="Filtrar por nome ou ID..." 
+                 placeholder="Filtrar por nome, ID ou Sub ID..." 
                  className="pl-10 rounded-xl border-gray-200 h-10 sm:h-11 text-xs sm:text-sm"
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
