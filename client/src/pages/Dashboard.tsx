@@ -986,7 +986,7 @@ export default function Dashboard() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
             <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
               <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
@@ -995,7 +995,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </CardContent>
           </Card>
 
@@ -1011,7 +1011,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all xs:col-span-2 md:col-span-1 ${stats && stats.netProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all ${stats && stats.netProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
             <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
               <CardTitle className={`text-[10px] sm:text-xs font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 <DollarSign className="w-3.5 h-3.5 sm:w-4 h-4" />
@@ -1019,24 +1019,9 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className={`text-2xl sm:text-3xl md:text-4xl font-black truncate ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+              <div className={`text-2xl sm:text-3xl font-black truncate ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatCurrency(stats?.netProfit || 0)}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Métricas de Engajamento */}
-        <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 sm:gap-6">
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
-              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 h-4 text-blue-500" />
-                Total Pedidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-xl sm:text-2xl font-black text-gray-900">{stats?.totalOrders || 0}</div>
             </CardContent>
           </Card>
 
@@ -1048,7 +1033,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-xl sm:text-2xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
+              <div className="text-2xl sm:text-3xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
             </CardContent>
           </Card>
         </div>
