@@ -1155,16 +1155,14 @@ export default function Dashboard() {
                      </Button>
                    </Link>
                  ) : (
-                   timeFilter === "today" && (
-                     <Button 
-                       variant="outline" 
-                       className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm"
-                       onClick={() => setSubIdForNewCampaign(searchTerm.trim())}
-                     >
-                       <Plus className="w-4 h-4 mr-2" />
-                       Criar Planilha: {searchTerm}
-                     </Button>
-                   )
+                   <Button 
+                     variant="outline" 
+                     className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm"
+                     onClick={() => setSubIdForNewCampaign(searchTerm.trim())}
+                   >
+                     <Plus className="w-4 h-4 mr-2" />
+                     Criar Planilha: {searchTerm}
+                   </Button>
                  )}
                </div>
              )}
