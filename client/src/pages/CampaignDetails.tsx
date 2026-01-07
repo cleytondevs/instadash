@@ -257,6 +257,20 @@ export default function CampaignDetails() {
                     );
                   })
                 )}
+                {allDates.length > 0 && (
+                  <TableRow className="bg-gray-100/50 border-t-2 border-gray-200">
+                    <TableCell className="font-black text-gray-900 uppercase tracking-wider">Total Geral</TableCell>
+                    <TableCell className="text-right font-black text-green-600">
+                      R$ {(totalRevenue / 100).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-black text-red-500">
+                      R$ {(totalExpenses / 100).toFixed(2)}
+                    </TableCell>
+                    <TableCell className={`text-right font-black ${netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                      R$ {(netProfit / 100).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
