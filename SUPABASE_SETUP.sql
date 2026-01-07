@@ -1,10 +1,7 @@
--- SCRIPT DEFINITIVO PARA CONFIGURAÇÃO DO BANCO DE DADOS
--- Este script cria as tabelas e as políticas de segurança na ordem correta.
+-- SCRIPT SIMPLIFICADO - SEM BLOCOS ESPECIAIS
+-- Execute este script para criar as tabelas e habilitar a segurança (RLS)
 
--- 1. Limpeza total (Opcional, mas recomendado para evitar conflitos)
--- DROP TABLE IF EXISTS campaign_expenses, campaign_sheets, sales, expenses, tracked_links CASCADE;
-
--- 2. Tabela de Vendas (Sales)
+-- 1. Tabelas
 CREATE TABLE IF NOT EXISTS sales (
     id SERIAL PRIMARY KEY,
     user_id UUID, 
@@ -20,7 +17,6 @@ CREATE TABLE IF NOT EXISTS sales (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Tabela de Despesas (Expenses)
 CREATE TABLE IF NOT EXISTS expenses (
     id SERIAL PRIMARY KEY,
     user_id UUID,
@@ -30,7 +26,6 @@ CREATE TABLE IF NOT EXISTS expenses (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Tabela de Links Rastreados (Tracked Links)
 CREATE TABLE IF NOT EXISTS tracked_links (
     id SERIAL PRIMARY KEY,
     user_id UUID,
@@ -41,7 +36,6 @@ CREATE TABLE IF NOT EXISTS tracked_links (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- 5. Tabela de Planilhas de Campanha (Campaign Sheets)
 CREATE TABLE IF NOT EXISTS campaign_sheets (
     id SERIAL PRIMARY KEY,
     user_id UUID,
@@ -50,7 +44,6 @@ CREATE TABLE IF NOT EXISTS campaign_sheets (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- 6. Tabela de Gastos de Campanha (Campaign Expenses)
 CREATE TABLE IF NOT EXISTS campaign_expenses (
     id SERIAL PRIMARY KEY,
     campaign_sheet_id INTEGER REFERENCES campaign_sheets(id) ON DELETE CASCADE,
@@ -60,43 +53,29 @@ CREATE TABLE IF NOT EXISTS campaign_expenses (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- 7. Ativar Segurança e Criar Políticas (Só após as tabelas existirem)
+-- 2. Ativar RLS
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tracked_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_sheets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_expenses ENABLE ROW LEVEL SECURITY;
 
-DO $$ 
-BEGIN
-    -- Vendas
-    ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own sales') THEN
-        CREATE POLICY "Users can manage their own sales" ON sales FOR ALL USING (auth.uid() = user_id);
-    END IF;
+-- 3. Políticas de Segurança (Se der erro de "already exists", você pode ignorar ou apagar as políticas antes)
+-- Para rodar este bloco várias vezes, limpamos as políticas primeiro:
+DROP POLICY IF EXISTS "Users can manage their own sales" ON sales;
+DROP POLICY IF EXISTS "Users can manage their own expenses" ON expenses;
+DROP POLICY IF EXISTS "Users can manage their own links" ON tracked_links;
+DROP POLICY IF EXISTS "Users can manage their own campaign sheets" ON campaign_sheets;
+DROP POLICY IF EXISTS "Users can manage their own campaign expenses" ON campaign_expenses;
 
-    -- Despesas
-    ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own expenses') THEN
-        CREATE POLICY "Users can manage their own expenses" ON expenses FOR ALL USING (auth.uid() = user_id);
-    END IF;
-
-    -- Links
-    ALTER TABLE tracked_links ENABLE ROW LEVEL SECURITY;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own links') THEN
-        CREATE POLICY "Users can manage their own links" ON tracked_links FOR ALL USING (auth.uid() = user_id);
-    END IF;
-
-    -- Planilhas
-    ALTER TABLE campaign_sheets ENABLE ROW LEVEL SECURITY;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own campaign sheets') THEN
-        CREATE POLICY "Users can manage their own campaign sheets" ON campaign_sheets FOR ALL USING (auth.uid() = user_id);
-    END IF;
-
-    -- Gastos de Campanha
-    ALTER TABLE campaign_expenses ENABLE ROW LEVEL SECURITY;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own campaign expenses') THEN
-        CREATE POLICY "Users can manage their own campaign expenses" ON campaign_expenses FOR ALL USING (
-          EXISTS (
-            SELECT 1 FROM campaign_sheets 
-            WHERE id = campaign_expenses.campaign_sheet_id 
-            AND user_id = auth.uid()
-          )
-        );
-    END IF;
-END $$;
+CREATE POLICY "Users can manage their own sales" ON sales FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own expenses" ON expenses FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own links" ON tracked_links FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own campaign sheets" ON campaign_sheets FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own campaign expenses" ON campaign_expenses FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM campaign_sheets 
+    WHERE id = campaign_expenses.campaign_sheet_id 
+    AND user_id = auth.uid()
+  )
+);
