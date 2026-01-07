@@ -98,6 +98,9 @@ export default function Dashboard() {
         }
 
         const { data: salesData, error: salesError } = await query;
+        console.log("Amostra de venda (Primeira):", salesData?.[0]);
+        console.log("Amostra de venda (Chaves):", salesData?.[0] ? Object.keys(salesData[0]) : "Vazio");
+        console.log("Amostra de venda (Sub ID):", salesData?.[0] ? (salesData[0].sub_id || salesData[0].subId || salesData[0].subid || "não encontrado") : "Sem dados");
         const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*");
 
         if (salesError || expensesError) {
@@ -539,17 +542,20 @@ export default function Dashboard() {
     if (!dataToFilter.length) return [];
     
     return dataToFilter
-      .map((p: any) => ({
-        productName: p.product_name || p.productName,
-        orderId: p.order_id || p.orderId,
-        subId: p.sub_id || p.subId,
-        revenue: p.revenue,
-        clicks: p.clicks
-      }))
+      .map((p: any) => {
+        const subIdValue = p.sub_id || p.subId || p.subid || p["Sub ID"] || p["Sub-ID"] || p.sub_id_venda;
+        return {
+          productName: p.product_name || p.productName || p.Nome || p.Product,
+          orderId: p.order_id || p.orderId || p.ID || p["Order ID"],
+          subId: subIdValue && subIdValue !== "-" ? String(subIdValue) : "-",
+          revenue: p.revenue,
+          clicks: p.clicks
+        };
+      })
       .filter((p: any) => 
         p.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.subId?.toLowerCase().includes(searchTerm.toLowerCase())
+        (p.subId !== "-" && p.subId?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
   }, [stats?.salesData, localProducts, searchTerm]);
 
