@@ -112,7 +112,8 @@ export default function Dashboard() {
             totalOrders: 0,
             totalClicks: 0,
             socialClicks: 0,
-            topProduct: null
+            topProduct: null,
+            salesData: []
           };
         }
 
@@ -177,7 +178,8 @@ export default function Dashboard() {
             .filter((s: any) => s.source === 'social_media')
             .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
           topProduct,
-          chartData
+          chartData,
+          salesData: salesData || []
         };
         
         return stats;
@@ -533,12 +535,21 @@ export default function Dashboard() {
   };
 
   const filteredProducts = useMemo(() => {
-    if (!localProducts.length) return [];
-    return localProducts.filter(p => 
-      p.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.orderId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [localProducts, searchTerm]);
+    const dataToFilter = stats?.salesData || localProducts || [];
+    if (!dataToFilter.length) return [];
+    
+    return dataToFilter
+      .map((p: any) => ({
+        productName: p.product_name || p.productName,
+        orderId: p.order_id || p.orderId,
+        revenue: p.revenue,
+        clicks: p.clicks
+      }))
+      .filter((p: any) => 
+        p.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.orderId?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [stats?.salesData, localProducts, searchTerm]);
 
   const deleteBatchMutation = useMutation({
     mutationFn: async (batchId: string) => {
