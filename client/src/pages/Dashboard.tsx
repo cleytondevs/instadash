@@ -567,13 +567,34 @@ export default function Dashboard() {
   };
 
   const { data: campaignStats } = useQuery({
-    queryKey: ["campaign-sheets-stats"],
+    queryKey: ["campaign-sheets-stats", timeFilter],
     queryFn: async () => {
       const { data: sheets, error: sheetsError } = await supabase.from("campaign_sheets").select("id, sub_id");
       if (sheetsError) throw sheetsError;
       
       const stats = await Promise.all(sheets.map(async (sheet) => {
-        const { data: sales } = await supabase.from("sales").select("revenue").eq("sub_id", sheet.sub_id);
+        let salesQuery = supabase.from("sales").select("revenue").eq("sub_id", sheet.sub_id);
+        
+        const now = new Date();
+        if (timeFilter === "today") {
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          salesQuery = salesQuery.gte("order_date", today);
+        } else if (timeFilter === "yesterday") {
+          const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          salesQuery = salesQuery.eq("order_date", yesterdayStr);
+        } else if (timeFilter === "weekly") {
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          salesQuery = salesQuery.gte("order_date", oneWeekAgo.toISOString());
+        } else if (timeFilter === "monthly") {
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          salesQuery = salesQuery.gte("order_date", oneMonthAgo.toISOString());
+        }
+
+        const { data: sales } = await salesQuery;
         const { data: expenses } = await supabase.from("campaign_expenses").select("amount").eq("campaign_sheet_id", sheet.id);
         
         const totalRev = sales?.reduce((sum, s) => sum + s.revenue, 0) || 0;
