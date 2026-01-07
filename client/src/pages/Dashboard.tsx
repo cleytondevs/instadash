@@ -264,7 +264,6 @@ export default function Dashboard() {
 
         const sales: any[] = results.data.map((row: any) => {
           const getVal = (possibleKeys: string[]) => {
-            // Normaliza chaves da planilha (remove espaços, minúsculas)
             const rowKeys = Object.keys(row);
             for (const key of possibleKeys) {
               const cleanSearchKey = key.toLowerCase().replace(/[\s_-]/g, "");
