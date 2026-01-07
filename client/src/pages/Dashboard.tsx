@@ -703,37 +703,27 @@ export default function Dashboard() {
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent">
-              <Share2 className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Links</span>
+              <Plus className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Planilhas</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="w-[95vw] rounded-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-emerald-600" />
-                Gerador de Links
-              </DialogTitle>
+              <DialogTitle>Gerenciamento de Vendas</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label className="text-xs font-bold">Link da Shopee</label>
-                <Input placeholder="Cole o link..." value={shopeeLink} onChange={(e) => setShopeeLink(e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-xs font-bold">Sub ID (Opcional)</label>
-                <Input placeholder="Ex: instagram" value={subId} onChange={(e) => setSubId(e.target.value)} />
-              </div>
-              <Button onClick={handleGenerateLink} className="bg-emerald-600 font-bold">Gerar e Salvar</Button>
-              
-              <div className="mt-4 space-y-2">
-                <p className="text-xs font-bold text-gray-500">Links Recentes</p>
-                {trackedLinks?.slice(0, 5).map((link: any) => (
-                  <div key={link.id} className="p-2.5 bg-gray-50 rounded-xl flex items-center justify-between border border-gray-100">
-                    <span className="text-[10px] font-bold truncate flex-1 mr-2">{link.subId || "Geral"}</span>
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(link.trackedUrl)}>
-                      <Share2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
+                {trackedLinks?.filter(l => campaignSheets?.includes(l.subId)).map((link: any) => (
+                  <Link key={link.id} href={`/campaign/${encodeURIComponent(link.subId)}`}>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{link.subId}</p>
+                        <p className="text-[10px] text-gray-500">Toque para gerenciar</p>
+                      </div>
+                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>

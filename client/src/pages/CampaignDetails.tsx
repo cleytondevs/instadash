@@ -31,6 +31,21 @@ export default function CampaignDetails() {
     }
   });
 
+  const updateCampaignTitleMutation = useMutation({
+    mutationFn: async (newTitle: string) => {
+      const { data, error } = await supabase
+        .from("campaign_sheets")
+        .update({ title: newTitle })
+        .eq("sub_id", subId);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheet", subId] });
+      toast({ title: "Sucesso", description: "Título atualizado." });
+    }
+  });
+
   const { data: sales, isLoading: loadingSales } = useQuery({
     queryKey: ["campaign-sales", subId],
     queryFn: async () => {
@@ -68,19 +83,50 @@ export default function CampaignDetails() {
   const totalExpenses = campaign?.campaign_expenses?.reduce((sum: number, e: any) => sum + e.amount, 0) || 0;
   const netProfit = totalRevenue - totalExpenses;
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+
   if (loadingCampaign || loadingSales) return <div className="p-8 text-center">Carregando...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-white border-b px-4 py-4 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
           </Link>
-          <h1 className="text-xl font-bold truncate max-w-[200px] sm:max-w-none">Campanha: {subId}</h1>
-          <div className="w-10"></div>
+          <div className="flex-1 flex items-center gap-2">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2 flex-1">
+                <Input 
+                  value={newTitle} 
+                  onChange={(e) => setNewTitle(e.target.value)} 
+                  placeholder="Nome da Campanha"
+                  className="h-8 text-sm"
+                />
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    updateCampaignTitleMutation.mutate(newTitle);
+                    setIsEditingTitle(false);
+                  }}
+                >Salvar</Button>
+                <Button size="sm" variant="ghost" onClick={() => setIsEditingTitle(false)}>X</Button>
+              </div>
+            ) : (
+              <h1 
+                className="text-xl font-bold truncate cursor-pointer hover:text-blue-600"
+                onClick={() => {
+                  setNewTitle(campaign?.title || "");
+                  setIsEditingTitle(true);
+                }}
+              >
+                {campaign?.title || `Campanha: ${subId}`}
+              </h1>
+            )}
+          </div>
         </div>
       </header>
 

@@ -76,6 +76,7 @@ export async function setupTables() {
       CREATE TABLE IF NOT EXISTS campaign_sheets (
         id SERIAL PRIMARY KEY,
         sub_id TEXT UNIQUE NOT NULL,
+        title TEXT,
         user_id TEXT REFERENCES users(id),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
@@ -92,6 +93,7 @@ export async function setupTables() {
       CREATE TABLE IF NOT EXISTS campaign_sheets (
         id SERIAL PRIMARY KEY,
         sub_id TEXT UNIQUE NOT NULL,
+        title TEXT,
         user_id TEXT REFERENCES users(id),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
