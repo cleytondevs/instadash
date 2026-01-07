@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS sales (
     source TEXT NOT NULL, -- 'shopee_video' ou 'social_media'
     revenue INTEGER NOT NULL, -- Valor em centavos (ex: 1000 = R$ 10,00)
     clicks INTEGER DEFAULT 0,
+    sub_id TEXT,
     batch_id TEXT, -- Identificador do upload para exclusão em lote
     upload_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -47,6 +48,25 @@ CREATE TABLE IF NOT EXISTS tracked_links (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
+-- 5. Campaign Sheets table
+CREATE TABLE IF NOT EXISTS campaign_sheets (
+    id SERIAL PRIMARY KEY,
+    sub_id TEXT UNIQUE NOT NULL,
+    title TEXT,
+    user_id TEXT NOT NULL DEFAULT 'default-user',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- 6. Campaign Expenses table
+CREATE TABLE IF NOT EXISTS campaign_expenses (
+    id SERIAL PRIMARY KEY,
+    campaign_sheet_id INTEGER REFERENCES campaign_sheets(id) ON DELETE CASCADE,
+    amount INTEGER NOT NULL,
+    date DATE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- Habilitar acesso público (apenas para teste inicial, considere RLS depois)
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public access" ON sales FOR ALL USING (true) WITH CHECK (true);
@@ -59,3 +79,9 @@ CREATE POLICY "Allow public access" ON tracked_links FOR ALL USING (true) WITH C
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public access" ON users FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE campaign_sheets ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public access" ON campaign_sheets FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE campaign_expenses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public access" ON campaign_expenses FOR ALL USING (true) WITH CHECK (true);
