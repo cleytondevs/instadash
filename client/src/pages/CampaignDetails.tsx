@@ -28,7 +28,39 @@ export default function CampaignDetails() {
         .eq("sub_id", subId)
         .single();
       if (error) throw error;
+      
+      // Ordenar gastos do mais novo para o mais antigo
+      if (data.campaign_expenses) {
+        data.campaign_expenses.sort((a: any, b: any) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+      }
+      
       return data;
+    }
+  });
+
+  const deleteEntryMutation = useMutation({
+    mutationFn: async ({ id, type }: { id: number, type: "gain" | "expense" }) => {
+      if (type === "expense") {
+        const { error } = await supabase
+          .from("campaign_expenses")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("sales")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheet", subId] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-sales", subId] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheets-stats"] });
+      toast({ title: "Sucesso", description: "Lançamento removido." });
     }
   });
 
@@ -168,83 +200,81 @@ export default function CampaignDetails() {
 
       <main className="max-w-4xl mx-auto p-4 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-green-50 border-green-100">
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-green-600 font-medium">Faturamento</p>
-                <TrendingUp className="w-4 h-4 text-green-500" />
-              </div>
-              <p className="text-2xl font-bold text-green-700">R$ {(totalRevenue / 100).toFixed(2)}</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-red-50 border-red-100">
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-red-600 font-medium">Gastos</p>
-                <TrendingDown className="w-4 h-4 text-red-500" />
-              </div>
-              <p className="text-2xl font-bold text-red-700">R$ {(totalExpenses / 100).toFixed(2)}</p>
-            </CardContent>
-          </Card>
-          <Card className={`${netProfit >= 0 ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Lucro Líquido</p>
-                <DollarSign className="w-4 h-4" />
-              </div>
-              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
-                R$ {(netProfit / 100).toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
+          {/* ... existing cards ... */}
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-black">Lançamento Manual</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-[0.5] space-y-1">
-              <label className="text-[10px] font-bold uppercase text-gray-400">Tipo</label>
-              <select 
-                value={entryType}
-                onChange={(e) => setEntryType(e.target.value as "gain" | "expense")}
-                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="expense">Gasto</option>
-                <option value="gain">Ganho</option>
-              </select>
-            </div>
-            <div className="flex-1 space-y-1">
-              <label className="text-[10px] font-bold uppercase text-gray-400">Valor</label>
-              <Input 
-                type="number" 
-                placeholder="0,00" 
-                value={amount} 
-                onChange={(e) => setAmount(e.target.value)}
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="flex-1 space-y-1">
-              <label className="text-[10px] font-bold uppercase text-gray-400">Data</label>
-              <Input 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)}
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={() => addEntryMutation.mutate()} 
-                disabled={addEntryMutation.isPending}
-                className={`h-11 rounded-xl px-8 font-bold ${entryType === 'expense' ? 'bg-[#EE4D2D] hover:bg-[#D73211]' : 'bg-green-600 hover:bg-green-700'}`}
-              >
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
-              </Button>
-            </div>
-          </CardContent>
+          {/* ... existing content ... */}
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="overflow-hidden border-none shadow-sm rounded-2xl">
+            <CardHeader className="bg-white border-b border-gray-100 py-3">
+              <CardTitle className="text-sm font-black uppercase text-red-500">Gastos Manuais</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableBody>
+                  {campaign?.campaign_expenses?.filter((e: any) => e.is_manual).length === 0 ? (
+                    <TableRow><TableCell className="text-center py-4 text-xs text-gray-400">Sem gastos</TableCell></TableRow>
+                  ) : (
+                    campaign?.campaign_expenses?.filter((e: any) => e.is_manual).map((exp: any) => (
+                      <TableRow key={exp.id}>
+                        <TableCell className="text-xs">{new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell className="text-right font-bold text-red-600 text-xs">R$ {(exp.amount / 100).toFixed(2)}</TableCell>
+                        <TableCell className="text-right p-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+                            onClick={() => deleteEntryMutation.mutate({ id: exp.id, type: "expense" })}
+                          >
+                            <Plus className="w-3 h-3 rotate-45" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden border-none shadow-sm rounded-2xl">
+            <CardHeader className="bg-white border-b border-gray-100 py-3">
+              <CardTitle className="text-sm font-black uppercase text-green-600">Ganhos Manuais</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableBody>
+                  {sales?.filter((s: any) => s.is_manual).length === 0 ? (
+                    <TableRow><TableCell className="text-center py-4 text-xs text-gray-400">Sem ganhos</TableCell></TableRow>
+                  ) : (
+                    sales?.filter((s: any) => s.is_manual).map((sale: any) => (
+                      <TableRow key={sale.id}>
+                        <TableCell className="text-xs">{new Date(sale.order_date).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell className="text-right font-bold text-green-600 text-xs">R$ {(sale.revenue / 100).toFixed(2)}</TableCell>
+                        <TableCell className="text-right p-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+                            onClick={() => deleteEntryMutation.mutate({ id: sale.id, type: "gain" })}
+                          >
+                            <Plus className="w-3 h-3 rotate-45" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="overflow-hidden border-none shadow-sm rounded-2xl">
           <CardHeader className="bg-white border-b border-gray-100">
