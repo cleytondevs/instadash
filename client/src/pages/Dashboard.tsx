@@ -566,6 +566,30 @@ export default function Dashboard() {
     }).format(cents / 100);
   };
 
+  const { data: campaignStats } = useQuery({
+    queryKey: ["campaign-sheets-stats"],
+    queryFn: async () => {
+      const { data: sheets, error: sheetsError } = await supabase.from("campaign_sheets").select("id, sub_id");
+      if (sheetsError) throw sheetsError;
+      
+      const stats = await Promise.all(sheets.map(async (sheet) => {
+        const { data: sales } = await supabase.from("sales").select("revenue").eq("sub_id", sheet.sub_id);
+        const { data: expenses } = await supabase.from("campaign_expenses").select("amount").eq("campaign_sheet_id", sheet.id);
+        
+        const totalRev = sales?.reduce((sum, s) => sum + s.revenue, 0) || 0;
+        const totalExp = expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
+        
+        return {
+          subId: sheet.sub_id,
+          revenue: totalRev,
+          expense: totalExp,
+          profit: totalRev - totalExp
+        };
+      }));
+      return stats;
+    }
+  });
+
   const { data: campaignSheets } = useQuery({
     queryKey: ["campaign-sheets"],
     queryFn: async () => {
@@ -720,21 +744,29 @@ export default function Dashboard() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
-                    {campaignSheets?.map((sheetSubId: string) => (
-                      <Link key={sheetSubId} href={`/campaign/${encodeURIComponent(sheetSubId)}`}>
-                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold truncate">{sheetSubId}</p>
-                            <p className="text-[10px] text-gray-500">Toque para gerenciar</p>
-                          </div>
-                          <TrendingUp className="w-4 h-4 text-emerald-500" />
+                <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
+                {campaignStats?.map((stat: any) => (
+                  <Link key={stat.subId} href={`/campaign/${encodeURIComponent(stat.subId)}`}>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{stat.subId}</p>
+                        <div className="flex gap-2 text-[9px] font-bold uppercase mt-1">
+                          <span className="text-green-600">Ganho: {formatCurrency(stat.revenue)}</span>
+                          <span className="text-red-500">Gasto: {formatCurrency(stat.expense)}</span>
                         </div>
-                      </Link>
-                    ))}
-                    {(!campaignSheets || campaignSheets.length === 0) && (
-                      <p className="text-center text-gray-500 py-8 text-xs">Nenhuma planilha de campanha criada ainda.</p>
-                    )}
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-xs font-black ${stat.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {formatCurrency(stat.profit)}
+                        </p>
+                        <p className="text-[8px] text-gray-400 uppercase font-bold">Balanço</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+                {(!campaignStats || campaignStats.length === 0) && (
+                  <p className="text-center text-gray-500 py-8 text-xs">Nenhuma planilha de campanha criada ainda.</p>
+                )}
                   </div>
                 </div>
               </DialogContent>

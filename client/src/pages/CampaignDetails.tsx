@@ -74,6 +74,7 @@ export default function CampaignDetails() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-sheet", subId] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheets-stats"] });
       setExpenseAmount("");
       toast({ title: "Sucesso", description: "Gasto adicionado." });
     }
@@ -85,6 +86,19 @@ export default function CampaignDetails() {
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+
+  const dailySales = sales?.reduce((acc: Record<string, number>, sale) => {
+    const date = new Date(sale.order_date).toISOString().split('T')[0];
+    acc[date] = (acc[date] || 0) + sale.revenue;
+    return acc;
+  }, {}) || {};
+
+  const dailyExpenses = campaign?.campaign_expenses?.reduce((acc: Record<string, number>, exp: any) => {
+    acc[exp.date] = (acc[exp.date] || 0) + exp.amount;
+    return acc;
+  }, {}) || {};
+
+  const allDates = Array.from(new Set([...Object.keys(dailySales), ...Object.keys(dailyExpenses)])).sort().reverse();
 
   if (loadingCampaign || loadingSales) return <div className="p-8 text-center">Carregando...</div>;
 
@@ -165,61 +179,83 @@ export default function CampaignDetails() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Adicionar Gasto</CardTitle>
+            <CardTitle className="text-lg font-black">Lançar Novo Gasto</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-1">
+          <CardContent className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 space-y-1">
+              <label className="text-[10px] font-bold uppercase text-gray-400">Valor</label>
               <Input 
                 type="number" 
-                placeholder="Valor (Ex: 50.00)" 
+                placeholder="0,00" 
                 value={expenseAmount} 
                 onChange={(e) => setExpenseAmount(e.target.value)}
+                className="h-11 rounded-xl"
               />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 space-y-1">
+              <label className="text-[10px] font-bold uppercase text-gray-400">Data</label>
               <Input 
                 type="date" 
                 value={expenseDate} 
                 onChange={(e) => setExpenseDate(e.target.value)}
+                className="h-11 rounded-xl"
               />
             </div>
-            <Button onClick={() => addExpenseMutation.mutate()} disabled={addExpenseMutation.isPending}>
-              <Plus className="w-4 h-4 mr-2" /> Adicionar
-            </Button>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => addExpenseMutation.mutate()} 
+                disabled={addExpenseMutation.isPending}
+                className="h-11 rounded-xl px-8 bg-[#EE4D2D] hover:bg-[#D73211] font-bold"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Adicionar
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Histórico de Gastos</CardTitle>
+        <Card className="overflow-hidden border-none shadow-sm rounded-2xl">
+          <CardHeader className="bg-white border-b border-gray-100">
+            <CardTitle className="text-lg font-black">Balanço Diário</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-gray-50/50">
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="font-bold text-gray-900">Data</TableHead>
+                  <TableHead className="text-right font-bold text-green-600">Ganhos</TableHead>
+                  <TableHead className="text-right font-bold text-red-500">Gastos</TableHead>
+                  <TableHead className="text-right font-bold text-gray-900">Saldo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campaign?.campaign_expenses?.length === 0 ? (
+                {allDates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center py-8 text-gray-500">
-                      Nenhum gasto registrado.
+                    <TableCell colSpan={4} className="text-center py-12 text-gray-400 font-medium">
+                      Nenhuma movimentação registrada para este Sub ID.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  campaign?.campaign_expenses?.map((e: any) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        {new Date(e.date).toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-red-600">
-                        R$ {(e.amount / 100).toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  allDates.map((date) => {
+                    const gain = dailySales[date] || 0;
+                    const loss = dailyExpenses[date] || 0;
+                    const balance = gain - loss;
+                    return (
+                      <TableRow key={date} className="hover:bg-gray-50/50">
+                        <TableCell className="font-medium text-gray-600">
+                          {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-green-600">
+                          R$ {(gain / 100).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-red-500">
+                          R$ {(loss / 100).toFixed(2)}
+                        </TableCell>
+                        <TableCell className={`text-right font-black ${balance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                          R$ {(balance / 100).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
