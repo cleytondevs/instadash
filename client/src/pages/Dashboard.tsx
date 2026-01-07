@@ -391,16 +391,34 @@ export default function Dashboard() {
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
 
   const { data: trackedLinks, refetch: refetchLinks } = useQuery<any[]>({
-    queryKey: ["/api/links"],
+    queryKey: ["tracked-links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tracked_links")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const updateLinkMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("PATCH", `/api/links/${data.id}`, data);
-      return res.json();
+      const { data: updatedLink, error } = await supabase
+        .from("tracked_links")
+        .update({
+          original_url: data.originalUrl,
+          tracked_url: data.trackedUrl,
+          sub_id: data.subId
+        })
+        .eq("id", data.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return updatedLink;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/links"] });
+      queryClient.invalidateQueries({ queryKey: ["tracked-links"] });
       toast({ title: "Sucesso", description: "Link atualizado com sucesso!" });
       setEditingLinkId(null);
       setShopeeLink("");
@@ -411,11 +429,21 @@ export default function Dashboard() {
 
   const createLinkMutation = useMutation({
     mutationFn: async (newLink: any) => {
-      const res = await apiRequest("POST", "/api/links", newLink);
-      return res.json();
+      const { data, error } = await supabase
+        .from("tracked_links")
+        .insert([{
+          user_id: "default-user",
+          original_url: newLink.originalUrl,
+          tracked_url: newLink.trackedUrl,
+          sub_id: newLink.subId
+        }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/links"] });
+      queryClient.invalidateQueries({ queryKey: ["tracked-links"] });
       toast({ title: "Sucesso", description: "Link salvo em 'Meus Links'" });
     }
   });

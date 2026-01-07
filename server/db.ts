@@ -48,6 +48,8 @@ export async function setupTables() {
         source TEXT,
         sub_id TEXT,
         order_date DATE,
+        batch_id TEXT,
+        upload_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 

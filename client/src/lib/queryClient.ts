@@ -9,6 +9,10 @@ async function throwIfResNotOk(res: Response) {
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+/**
+ * @deprecated Use Supabase client directly for new code.
+ * This is kept for compatibility with existing components that haven't been migrated yet.
+ */
 export async function apiRequest(
   method: string,
   url: string,
