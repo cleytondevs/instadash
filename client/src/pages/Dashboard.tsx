@@ -986,54 +986,61 @@ export default function Dashboard() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* Balanço Diário e Métricas Principais - Otimizado para Mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
-              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingUp className="w-3.5 h-3.5 sm:w-4 h-4 text-emerald-500" />
+            <CardHeader className="pb-1 pt-4 px-5">
+              <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                 Faturamento
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="px-5 pb-5">
               <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <p className="text-[10px] text-gray-400 font-medium mt-1">Total bruto recebido</p>
             </CardContent>
           </Card>
 
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
-              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingDown className="w-3.5 h-3.5 sm:w-4 h-4 text-red-500" />
+            <CardHeader className="pb-1 pt-4 px-5">
+              <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                 Custos
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="px-5 pb-5">
               <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalExpenses || 0)}</div>
+              <p className="text-[10px] text-gray-400 font-medium mt-1">Despesas e anúncios</p>
             </CardContent>
           </Card>
 
-          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all ${stats && stats.netProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
-              <CardTitle className={`text-[10px] sm:text-xs font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                <DollarSign className="w-3.5 h-3.5 sm:w-4 h-4" />
+          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all ${stats && stats.netProfit >= 0 ? 'bg-emerald-50/50' : 'bg-red-50/50'}`}>
+            <CardHeader className="pb-1 pt-4 px-5">
+              <CardTitle className={`text-[10px] font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <DollarSign className="w-3.5 h-3.5" />
                 Lucro Líquido
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="px-5 pb-5">
               <div className={`text-2xl sm:text-3xl font-black truncate ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatCurrency(stats?.netProfit || 0)}
               </div>
+              <p className={`text-[10px] font-bold mt-1 ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {stats && stats.totalRevenue > 0 ? ((stats.netProfit / stats.totalRevenue) * 100).toFixed(1) : 0}% Margem
+              </p>
             </CardContent>
           </Card>
 
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 sm:pb-2 pt-4 px-4 sm:px-6">
-              <CardTitle className="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <Share2 className="w-3.5 h-3.5 sm:w-4 h-4 text-blue-600" />
+            <CardHeader className="pb-1 pt-4 px-5">
+              <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                <Share2 className="w-3.5 h-3.5 text-blue-600" />
                 Cliques Redes
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="px-5 pb-5">
               <div className="text-2xl sm:text-3xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
+              <p className="text-[10px] text-gray-400 font-medium mt-1">Total de cliques</p>
             </CardContent>
           </Card>
         </div>
