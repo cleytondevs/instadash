@@ -575,17 +575,39 @@ export default function Dashboard() {
     }
   });
 
+  const [subIdForNewCampaign, setSubIdForNewCampaign] = useState<string | null>(null);
+  const [initialExpense, setInitialExpense] = useState("");
+
   const createCampaignMutation = useMutation({
-    mutationFn: async (subId: string) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ subId, expense }: { subId: string, expense: number }) => {
+      // 1. Criar a planilha
+      const { data: sheet, error: sheetError } = await supabase
         .from("campaign_sheets")
-        .insert([{ sub_id: subId, user_id: "default-user" }]);
-      if (error) throw error;
-      return data;
+        .insert([{ sub_id: subId, user_id: "default-user" }])
+        .select()
+        .single();
+      
+      if (sheetError) throw sheetError;
+
+      // 2. Se houver gasto inicial, adicionar
+      if (expense > 0) {
+        const { error: expenseError } = await supabase
+          .from("campaign_expenses")
+          .insert([{
+            campaign_sheet_id: sheet.id,
+            amount: expense,
+            date: new Date().toISOString().split('T')[0]
+          }]);
+        if (expenseError) throw expenseError;
+      }
+
+      return sheet;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-sheets"] });
-      toast({ title: "Sucesso", description: "Planilha de campanha criada." });
+      toast({ title: "Sucesso", description: "Planilha de campanha criada com gasto inicial." });
+      setSubIdForNewCampaign(null);
+      setInitialExpense("");
     }
   });
 
@@ -1099,8 +1121,7 @@ export default function Dashboard() {
                    <Button 
                      variant="outline" 
                      className="h-10 sm:h-11 rounded-xl font-bold px-6 border-gray-200 w-full sm:w-auto text-xs sm:text-sm"
-                     onClick={() => createCampaignMutation.mutate(searchTerm)}
-                     disabled={createCampaignMutation.isPending}
+                     onClick={() => setSubIdForNewCampaign(searchTerm)}
                    >
                      <Plus className="w-4 h-4 mr-2" />
                      Criar Planilha: {searchTerm}
@@ -1108,6 +1129,40 @@ export default function Dashboard() {
                  )}
                </div>
              )}
+
+             <Dialog open={!!subIdForNewCampaign} onOpenChange={(open) => !open && setSubIdForNewCampaign(null)}>
+               <DialogContent className="w-[95vw] rounded-2xl">
+                 <DialogHeader>
+                   <DialogTitle>Criar Planilha: {subIdForNewCampaign}</DialogTitle>
+                   <DialogDescription>Quanto você gastou nesta campanha até agora?</DialogDescription>
+                 </DialogHeader>
+                 <div className="py-4 space-y-4">
+                   <div className="space-y-2">
+                     <label className="text-xs font-bold uppercase text-gray-500">Valor Gasto (R$)</label>
+                     <Input 
+                       type="number" 
+                       placeholder="0,00" 
+                       value={initialExpense}
+                       onChange={(e) => setInitialExpense(e.target.value)}
+                     />
+                   </div>
+                   <Button 
+                    className="w-full bg-[#EE4D2D] hover:bg-[#D73211] font-bold h-11"
+                    onClick={() => {
+                      if (subIdForNewCampaign) {
+                        createCampaignMutation.mutate({
+                          subId: subIdForNewCampaign,
+                          expense: Math.floor(parseFloat(initialExpense || "0") * 100)
+                        });
+                      }
+                    }}
+                    disabled={createCampaignMutation.isPending}
+                   >
+                     {createCampaignMutation.isPending ? "Criando..." : "Confirmar e Criar"}
+                   </Button>
+                 </div>
+               </DialogContent>
+             </Dialog>
           </div>
         </div>
 
@@ -1139,7 +1194,7 @@ export default function Dashboard() {
                           campaignSheets?.includes(product.subId) ? (
                             <Link href={`/campaign/${encodeURIComponent(product.subId)}`}>
                               <Button variant="outline" size="sm" className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50">
-                                Ver Detalhes
+                                Adicionar à Planilha
                               </Button>
                             </Link>
                           ) : (
@@ -1147,8 +1202,7 @@ export default function Dashboard() {
                               variant="outline" 
                               size="sm" 
                               className="h-7 text-xs border-gray-200 text-gray-600 hover:bg-gray-50"
-                              onClick={() => createCampaignMutation.mutate(product.subId)}
-                              disabled={createCampaignMutation.isPending}
+                              onClick={() => setSubIdForNewCampaign(product.subId)}
                             >
                               Criar Planilha
                             </Button>
