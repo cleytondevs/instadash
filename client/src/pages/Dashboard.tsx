@@ -1005,6 +1005,39 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Seção de Análise de Produtos - Tabela de Produtos Filtrados */}
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs font-bold uppercase tracking-wider">Produto</TableHead>
+                  <TableHead className="text-xs font-bold uppercase tracking-wider">ID Pedido</TableHead>
+                  <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Receita</TableHead>
+                  <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Cliques</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.map((product, index) => (
+                  <TableRow key={index} className="hover:bg-gray-50/50">
+                    <TableCell className="text-xs font-medium max-w-[200px] truncate">{product.productName}</TableCell>
+                    <TableCell className="text-[10px] font-mono text-gray-400">{product.orderId}</TableCell>
+                    <TableCell className="text-xs font-bold text-gray-900 text-right">{formatCurrency(product.revenue)}</TableCell>
+                    <TableCell className="text-xs font-medium text-gray-500 text-right">{product.clicks}</TableCell>
+                  </TableRow>
+                ))}
+                {filteredProducts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center text-gray-400 text-xs">
+                      {searchTerm ? "Nenhum produto encontrado para sua busca." : "Nenhum dado de produto disponível."}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
         {/* Seção de Categorias - Responsivo */}
         {(stats as any)?.chartData?.length > 0 && (
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl sm:rounded-3xl">
