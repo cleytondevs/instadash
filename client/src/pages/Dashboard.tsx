@@ -619,6 +619,58 @@ export default function Dashboard() {
     }).format(cents / 100);
   };
 
+  const [subIdForExpense, setSubIdForExpense] = useState<string | null>(null);
+  const [newExpenseAmount, setNewExpenseAmount] = useState("");
+
+  const addExpenseMutation = useMutation({
+    mutationFn: async (data: { subId: string, amount: number }) => {
+      if (!user) throw new Error("Usuário não autenticado");
+      
+      // Primeiro, garantir que a planilha de campanha existe
+      let { data: sheet, error: sheetError } = await supabase
+        .from("campaign_sheets")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("sub_id", data.subId)
+        .single();
+      
+      if (sheetError && sheetError.code === 'PGRST116') {
+        // Criar se não existir
+        const { data: newSheet, error: createError } = await supabase
+          .from("campaign_sheets")
+          .insert([{ user_id: user.id, sub_id: data.subId }])
+          .select()
+          .single();
+        if (createError) throw createError;
+        sheet = newSheet;
+      } else if (sheetError) {
+        throw sheetError;
+      }
+
+      const { error: expError } = await supabase
+        .from("expenses")
+        .insert([{
+          user_id: user.id,
+          campaign_sheet_id: sheet.id,
+          amount: data.amount,
+          description: "Gasto Manual",
+          date: new Date().toISOString().split('T')[0]
+        }]);
+      
+      if (expError) throw expError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheets-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      toast({ title: "Sucesso", description: "Gasto adicionado com sucesso!" });
+      setSubIdForExpense(null);
+      setNewExpenseAmount("");
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Erro", description: error.message });
+    }
+  });
+
   const { data: campaignStats } = useQuery({
     queryKey: ["campaign-sheets-stats", timeFilter, user?.id],
     queryFn: async () => {
@@ -1010,10 +1062,17 @@ export default function Dashboard() {
                     </h3>
                     <div className="space-y-3">
                       {campaignStats?.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 cursor-pointer transition-all group"
+                          onClick={() => setSubIdForExpense(item.subId)}
+                        >
                           <div className="flex items-center gap-3">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5] }} />
-                            <span className="text-sm font-bold text-gray-700">{item.subId}</span>
+                            <div className="min-w-0">
+                              <span className="text-sm font-bold text-gray-700 block">{item.subId}</span>
+                              <span className="text-[10px] text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Clique para add gasto</span>
+                            </div>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</p>
@@ -1025,6 +1084,55 @@ export default function Dashboard() {
                       )}
                     </div>
                   </div>
+
+                  <Dialog open={!!subIdForExpense} onOpenChange={(open) => !open && setSubIdForExpense(null)}>
+                    <DialogContent className="w-[95vw] max-w-sm rounded-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <DollarSign className="w-5 h-5 text-indigo-600" />
+                          Adicionar Gasto: {subIdForExpense}
+                        </DialogTitle>
+                        <DialogDescription>
+                          Insira o valor gasto hoje para esta campanha.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase text-gray-500">Valor Gasto (R$)</Label>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0,00" 
+                            autoFocus
+                            value={newExpenseAmount}
+                            onChange={(e) => setNewExpenseAmount(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && newExpenseAmount) {
+                                addExpenseMutation.mutate({
+                                  subId: subIdForExpense!,
+                                  amount: Math.floor(parseFloat(newExpenseAmount) * 100)
+                                });
+                              }
+                            }}
+                          />
+                        </div>
+                        <Button 
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl"
+                          onClick={() => {
+                            if (newExpenseAmount) {
+                              addExpenseMutation.mutate({
+                                subId: subIdForExpense!,
+                                  amount: Math.floor(parseFloat(newExpenseAmount) * 100)
+                              });
+                            }
+                          }}
+                          disabled={addExpenseMutation.isPending}
+                        >
+                          {addExpenseMutation.isPending ? "Salvando..." : "Salvar Gasto"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   <Button 
                     variant="ghost" 
