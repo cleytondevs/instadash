@@ -368,9 +368,9 @@ export default function Dashboard() {
         }
 
       // 5. Salva os Sub IDs novos no banco de dados automaticamente
-      const syncSubIds = async () => {
+      const syncSubIds = async (salesData: any[]) => {
         const uniqueSubIds = Array.from(new Set(
-          sales
+          salesData
             .map(s => s.subId)
             .filter(id => id && id !== "" && id !== "-")
         ));
@@ -394,7 +394,7 @@ export default function Dashboard() {
         }
       };
 
-      syncSubIds().then(() => {
+      syncSubIds(sales).then(() => {
         uploadMutation.mutate(sales);
         setLocalProducts(sales);
         localStorage.setItem("last_upload_products", JSON.stringify(sales));
