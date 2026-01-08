@@ -36,9 +36,11 @@ export default function CampaignDetails() {
         .select("*, campaign_expenses(*)")
         .eq("sub_id", subId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       
+      if (!data) return null;
+
       // Ordenar gastos do mais novo para o mais antigo
       if (data.campaign_expenses) {
         data.campaign_expenses.sort((a: any, b: any) => 
@@ -47,7 +49,8 @@ export default function CampaignDetails() {
       }
       
       return data;
-    }
+    },
+    enabled: !!user
   });
 
   const deleteEntryMutation = useMutation({
@@ -100,7 +103,8 @@ export default function CampaignDetails() {
         .eq("user_id", user.id);
       if (error) throw error;
       return data || [];
-    }
+    },
+    enabled: !!user
   });
 
   const addEntryMutation = useMutation({
