@@ -657,50 +657,38 @@ export default function Dashboard() {
     queryKey: ["campaign-sheets", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      console.log("Fetching campaign sheets from Supabase...");
       const { data, error } = await supabase.from("campaign_sheets").select("sub_id").eq("user_id", user.id);
-      if (error) {
-        console.error("Supabase Error (campaign_sheets):", error);
-        throw error;
-      }
-      console.log("Campaign sheets data:", data);
+      if (error) throw error;
       return data?.map(s => s.sub_id) || [];
     }
   });
 
-  const [subIdForNewCampaign, setSubIdForNewCampaign] = useState<string | null>(null);
-  const [initialExpense, setInitialExpense] = useState("");
+  const [newSubId, setNewSubId] = useState("");
 
   const createCampaignMutation = useMutation({
-    mutationFn: async ({ subId, expense }: { subId: string, expense: number }) => {
-      // 1. Criar a planilha
-      const { data: sheet, error: sheetError } = await supabase
+    mutationFn: async (subId: string) => {
+      if (!user) throw new Error("Usuário não autenticado");
+      const { data, error } = await supabase
         .from("campaign_sheets")
-        .insert([{ sub_id: subId, user_id: "default-user" }])
+        .insert([{ sub_id: subId, user_id: user.id }])
         .select()
         .single();
       
-      if (sheetError) throw sheetError;
-
-      // 2. Se houver gasto inicial, adicionar
-      if (expense > 0) {
-        const { error: expenseError } = await supabase
-          .from("campaign_expenses")
-          .insert([{
-            campaign_sheet_id: sheet.id,
-            amount: expense,
-            date: new Date().toISOString().split('T')[0]
-          }]);
-        if (expenseError) throw expenseError;
-      }
-
-      return sheet;
+      if (error) throw error;
+      return data;
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["campaign-sheets"] });
-      toast({ title: "Sucesso", description: "Planilha de campanha criada com gasto inicial." });
-      setSubIdForNewCampaign(null);
-      setInitialExpense("");
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheets", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-sheets-stats"] });
+      toast({ title: "Sucesso", description: "Planilha de campanha criada." });
+      setLocation(`/campaign/${encodeURIComponent(data.sub_id)}`);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar",
+        description: error.message
+      });
     }
   });
 
@@ -883,8 +871,29 @@ export default function Dashboard() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
-                {campaignStats?.map((stat: any) => (
+                    <Label className="text-xs font-bold uppercase text-gray-400">Novo Sub ID</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Ex: camp-face-01" 
+                        value={newSubId}
+                        onChange={(e) => setNewSubId(e.target.value)}
+                        className="rounded-xl"
+                      />
+                      <Button 
+                        onClick={() => {
+                          if (!newSubId) return;
+                          createCampaignMutation.mutate(newSubId);
+                        }}
+                        disabled={createCampaignMutation.isPending}
+                        className="bg-[#EE4D2D] hover:bg-[#D73211] rounded-xl font-bold"
+                      >
+                        Criar
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-4 border-t">
+                    <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
+                    {campaignStats?.map((stat: any) => (
                   <Link key={stat.subId} href={`/campaign/${encodeURIComponent(stat.subId)}`}>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="min-w-0">

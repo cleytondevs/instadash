@@ -19,13 +19,23 @@ export default function CampaignDetails() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [entryType, setEntryType] = useState<"gain" | "expense">("expense");
 
-  const { data: campaign, isLoading: loadingCampaign } = useQuery({
-    queryKey: ["campaign-sheet", subId],
+  const { data: user } = useQuery<any>({
+    queryKey: ["auth-user"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+  });
+
+  const { data: campaign, isLoading: loadingCampaign } = useQuery({
+    queryKey: ["campaign-sheet", subId, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
       const { data, error } = await supabase
         .from("campaign_sheets")
         .select("*, campaign_expenses(*)")
         .eq("sub_id", subId)
+        .eq("user_id", user.id)
         .single();
       if (error) throw error;
       
@@ -80,12 +90,14 @@ export default function CampaignDetails() {
   });
 
   const { data: sales, isLoading: loadingSales } = useQuery({
-    queryKey: ["campaign-sales", subId],
+    queryKey: ["campaign-sales", subId, user?.id],
     queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from("sales")
         .select("*")
-        .eq("sub_id", subId);
+        .eq("sub_id", subId)
+        .eq("user_id", user.id);
       if (error) throw error;
       return data || [];
     }
@@ -104,6 +116,7 @@ export default function CampaignDetails() {
           .from("campaign_expenses")
           .insert([{
             campaign_sheet_id: campaign.id,
+            user_id: user.id,
             amount: amountCents,
             date: date,
             is_manual: true
@@ -116,7 +129,7 @@ export default function CampaignDetails() {
         const { error } = await supabase
           .from("sales")
           .insert([{
-            user_id: "default-user",
+            user_id: user.id,
             sub_id: subId,
             revenue: amountCents,
             order_date: date,
