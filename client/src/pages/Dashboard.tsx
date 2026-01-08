@@ -109,8 +109,12 @@ export default function Dashboard() {
   const [debugHeaders, setDebugHeaders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [localProducts, setLocalProducts] = useState<any[]>(() => {
-    const saved = localStorage.getItem("last_upload_products");
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem("last_upload_products");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   });
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
   const [isConnectingFb, setIsConnectingFb] = useState(false);
@@ -356,6 +360,7 @@ export default function Dashboard() {
         uploadMutation.mutate(sales);
         setLocalProducts(sales);
         localStorage.setItem("last_upload_products", JSON.stringify(sales));
+        console.log("Persistindo localProducts:", sales.length);
       },
       error: (error) => {
         setIsUploading(false);
@@ -721,12 +726,12 @@ export default function Dashboard() {
   });
 
   const filteredProducts = useMemo(() => {
-    const dataToFilter = stats?.salesData || localProducts || [];
+    // Priority for localProducts if we just uploaded, otherwise stats?.salesData
+    const dataToFilter = localProducts.length > 0 ? localProducts : (stats?.salesData || []);
     if (!dataToFilter.length) return [];
     
     const products = dataToFilter
       .map((p: any) => {
-        // Normaliza o Sub ID priorizando o valor vindo do banco ou da planilha
         const subIdValue = p.sub_id || p.subId || p.subid || p["Sub ID"] || p["Sub-ID"];
         return {
           productName: p.product_name || p.productName || p.Nome || p.Product,
@@ -734,7 +739,7 @@ export default function Dashboard() {
           subId: subIdValue && subIdValue !== "-" ? String(subIdValue).trim() : "-",
           revenue: p.revenue,
           clicks: p.clicks,
-          orderDate: p.order_date || p.orderDate || p.Data || p["Order Date"]
+          orderDate: p.order_date || p.orderDate || p.Data || p["Order Date"] || p.orderTime || p.orderCreationDate
         };
       })
       .filter((p: any) => {
@@ -769,18 +774,12 @@ export default function Dashboard() {
         return true;
       });
 
-    // Ordenar: primeiro os que têm Sub ID (diferente de "-"), depois organizar alfabeticamente por Sub ID
     return products.sort((a: any, b: any) => {
       const aHasSubId = a.subId && a.subId !== "-";
       const bHasSubId = b.subId && b.subId !== "-";
-
       if (aHasSubId && !bHasSubId) return -1;
       if (!aHasSubId && bHasSubId) return 1;
-      
-      if (aHasSubId && bHasSubId) {
-        return a.subId.localeCompare(b.subId);
-      }
-      
+      if (aHasSubId && bHasSubId) return a.subId.localeCompare(b.subId);
       return 0;
     });
   }, [stats?.salesData, localProducts, searchTerm, timeFilter]);
