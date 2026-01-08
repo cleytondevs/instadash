@@ -894,6 +894,63 @@ export default function Dashboard() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="rounded-xl border-gray-200 hover:bg-gray-50 h-9 w-9 sm:h-10 sm:w-10 transition-colors">
+                  <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-lg rounded-2xl sm:rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+                <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 sm:p-8 text-white">
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2 flex items-center gap-2">
+                    <FileText className="w-6 h-6" /> Gerenciamento de Planilha
+                  </h2>
+                  <p className="text-blue-100 text-sm font-medium opacity-90">Gerencie seus uploads e organize seus dados de vendas.</p>
+                </div>
+                
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                      <Package className="w-4 h-4" /> Histórico de Uploads
+                    </h3>
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {uploadBatches?.map((batch) => (
+                        <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter truncate">{batch.id}</p>
+                            <p className="text-xs font-bold text-gray-700">{new Date(batch.date).toLocaleDateString('pt-BR')} • {batch.count} vendas</p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg h-8 w-8"
+                            onClick={() => deleteBatchMutation.mutate(batch.id)}
+                            disabled={deleteBatchMutation.isPending}
+                          >
+                            <TrendingDown className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      {(!uploadBatches || uploadBatches.length === 0) && (
+                        <p className="text-center py-4 text-xs font-medium text-gray-400 italic">Nenhum upload realizado ainda.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-100 flex flex-col gap-3">
+                    <Button 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full bg-[#EE4D2D] hover:bg-[#D73211] text-white font-bold h-11 rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {isUploading ? "Enviando..." : "Subir Nova Planilha"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-xl border-gray-200 hover:bg-gray-50 h-9 w-9 sm:h-10 sm:w-10 transition-colors">
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                 </Button>
               </DialogTrigger>
@@ -947,34 +1004,6 @@ export default function Dashboard() {
                       >
                         {isConnectingFb ? "Conectando..." : "Vincular Perfil"}
                       </Button>
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-gray-100">
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Package className="w-4 h-4" /> Histórico de Uploads
-                    </h3>
-                    <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                      {uploadBatches?.map((batch) => (
-                        <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100">
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter truncate">{batch.id}</p>
-                            <p className="text-xs font-bold text-gray-700">{new Date(batch.date).toLocaleDateString('pt-BR')} • {batch.count} vendas</p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg h-8 w-8"
-                            onClick={() => deleteBatchMutation.mutate(batch.id)}
-                            disabled={deleteBatchMutation.isPending}
-                          >
-                            <TrendingDown className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      {(!uploadBatches || uploadBatches.length === 0) && (
-                        <p className="text-center py-4 text-xs font-medium text-gray-400 italic">Nenhum upload realizado ainda.</p>
-                      )}
                     </div>
                   </div>
 
