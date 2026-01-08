@@ -843,7 +843,7 @@ export default function Dashboard() {
               <h1 className="text-sm sm:text-lg font-bold text-gray-900 truncate">
                 InstaDash <span className="text-[#EE4D2D] font-normal hidden sm:inline">Shopee</span>
               </h1>
-              <p className="text-[10px] text-gray-400 truncate font-medium">{user.email}</p>
+              <p className="text-[10px] text-gray-400 truncate font-medium">{user?.email}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
