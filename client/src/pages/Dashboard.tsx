@@ -1138,42 +1138,102 @@ export default function Dashboard() {
                 
                 <div className="p-6 sm:p-8 space-y-6">
                   <div className="space-y-4">
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                      <PieChart className="w-4 h-4" /> Resumo de Performance
-                    </h3>
-                    <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <PieChart className="w-4 h-4" /> Gestão de Gastos Diários
+                      </h3>
+                      <div className="text-[10px] font-bold text-gray-400 uppercase">
+                        {timeFilter === 'today' ? 'Hoje' : 
+                         timeFilter === 'yesterday' ? 'Ontem' : 
+                         timeFilter === 'weekly' ? 'Últimos 7 dias' : 'Últimos 30 dias'}
+                      </div>
+                    </div>
+                    
+                    <div className="grid gap-3">
                       {campaignStats?.map((item: any, index: number) => (
                         <div 
                           key={index} 
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 cursor-pointer transition-all group"
-                          onClick={async () => {
-                            setSubIdForExpense(item.subId);
-                            // O mutation addExpenseMutation já cuida de criar a planilha se ela não existir
-                            // e salvar o gasto individual no banco de dados.
-                          }}
+                          className="bg-gray-50 rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-all group"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5] }} />
-                            <div className="min-w-0">
-                              <span className="text-sm font-bold text-gray-700 block">{item.subId}</span>
-                              <span className="text-[10px] text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Clique para add gasto</span>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-[#EE4D2D]" />
+                              <span className="text-sm font-black text-gray-900">{item.subId}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] font-black text-gray-400 uppercase block">Receita</span>
+                              <span className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</p>
-                            <p className={`text-[10px] font-bold ${item.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              Lucro: {formatCurrency(item.profit)}
-                            </p>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">R$</span>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  placeholder="0,00" 
+                                  className="h-9 pl-8 rounded-xl bg-white border-gray-200 text-sm font-bold focus:ring-[#EE4D2D]"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const val = (e.target as HTMLInputElement).value;
+                                      if (val) {
+                                        addExpenseMutation.mutate({
+                                          subId: item.subId,
+                                          amount: Math.floor(parseFloat(val) * 100)
+                                        });
+                                        (e.target as HTMLInputElement).value = "";
+                                      }
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm"
+                              variant="ghost"
+                              className="h-9 px-3 rounded-xl text-[#EE4D2D] hover:bg-[#EE4D2D]/10 font-bold text-xs flex items-center gap-2"
+                              onClick={(e) => {
+                                const input = e.currentTarget.previousElementSibling?.querySelector('input');
+                                if (input?.value) {
+                                  addExpenseMutation.mutate({
+                                    subId: item.subId,
+                                    amount: Math.floor(parseFloat(input.value) * 100)
+                                  });
+                                  input.value = "";
+                                }
+                              }}
+                            >
+                              <Plus className="w-3 h-3" /> Add
+                            </Button>
+                          </div>
+
+                          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <div className="flex gap-4">
+                              <div>
+                                <span className="text-[9px] font-black text-gray-400 uppercase block">Gasto</span>
+                                <span className="text-xs font-bold text-gray-700">{formatCurrency(item.expenses)}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] font-black text-gray-400 uppercase block">Lucro</span>
+                                <span className={`text-xs font-black ${item.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {formatCurrency(item.profit)}
+                                </span>
+                              </div>
+                            </div>
                             {item.expenses > 0 && (
-                              <p className="text-[9px] text-gray-400 font-medium">
-                                ROI: {item.roi.toFixed(0)}%
-                              </p>
+                              <div className="bg-gray-100 px-2 py-0.5 rounded-lg">
+                                <span className="text-[9px] font-black text-gray-600 uppercase">ROI {item.roi.toFixed(0)}%</span>
+                              </div>
                             )}
                           </div>
                         </div>
                       ))}
                       {(!campaignStats || campaignStats.length === 0) && (
-                        <p className="text-center py-4 text-xs font-medium text-gray-400 italic">Nenhuma campanha ativa no momento.</p>
+                        <p className="text-center py-8 text-xs font-medium text-gray-400 italic bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                          Nenhuma campanha ativa para este período.
+                        </p>
                       )}
                     </div>
                   </div>
