@@ -1406,56 +1406,58 @@ export default function Dashboard() {
         </div>
 
         {/* Seção de Análise de Produtos - Tabela de Produtos Filtrados */}
-        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs font-bold uppercase tracking-wider">Produto</TableHead>
-                  <TableHead className="text-xs font-bold uppercase tracking-wider">Sub ID</TableHead>
-                  <TableHead className="text-xs font-bold uppercase tracking-wider">ID Pedido</TableHead>
-                  <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Receita</TableHead>
-                  <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Cliques</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map((product: any, index: number) => (
-                  <TableRow key={index} className="hover:bg-gray-50/50">
-                    <TableCell className="text-xs font-medium max-w-[200px] truncate">{product.productName}</TableCell>
-                    <TableCell className="text-[10px] font-bold text-blue-600">{product.subId || "-"}</TableCell>
-                    <TableCell className="text-[10px] font-mono text-gray-400">{product.orderId}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="font-bold text-[#EE4D2D]">
-                          {formatCurrency(product.revenue)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs font-medium text-gray-500 text-right">{product.clicks}</TableCell>
-                  </TableRow>
-                ))}
-                {filteredProducts.length === 0 && (
+        {stats?.salesData && stats.salesData.length > 0 && (
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-gray-400 text-xs">
-                      {searchTerm ? "Nenhum produto encontrado para sua busca." : "Nenhum dado de produto disponível."}
-                    </TableCell>
+                    <TableHead className="text-xs font-bold uppercase tracking-wider">Produto</TableHead>
+                    <TableHead className="text-xs font-bold uppercase tracking-wider">Sub ID</TableHead>
+                    <TableHead className="text-xs font-bold uppercase tracking-wider">ID Pedido</TableHead>
+                    <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Receita</TableHead>
+                    <TableHead className="text-xs font-bold uppercase tracking-wider text-right">Cliques</TableHead>
                   </TableRow>
-                )}
-                {searchTerm && filteredProducts.length > 0 && (
-                  <TableRow className="bg-gray-50/50 border-t-2 border-gray-100">
-                    <TableCell colSpan={3} className="text-xs font-black text-gray-900 uppercase tracking-wider">Total Filtrado</TableCell>
-                    <TableCell className="text-right font-black text-[#EE4D2D]">
-                      {formatCurrency(filteredProducts.reduce((sum: number, p: any) => sum + p.revenue, 0))}
-                    </TableCell>
-                    <TableCell className="text-right font-black text-gray-900">
-                      {filteredProducts.reduce((sum: number, p: any) => sum + p.clicks, 0)}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredProducts.map((product: any, index: number) => (
+                    <TableRow key={index} className="hover:bg-gray-50/50">
+                      <TableCell className="text-xs font-medium max-w-[200px] truncate">{product.productName}</TableCell>
+                      <TableCell className="text-[10px] font-bold text-blue-600">{product.subId || "-"}</TableCell>
+                      <TableCell className="text-[10px] font-mono text-gray-400">{product.orderId}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-bold text-[#EE4D2D]">
+                            {formatCurrency(product.revenue)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs font-medium text-gray-500 text-right">{product.clicks}</TableCell>
+                    </TableRow>
+                  ))}
+                  {filteredProducts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center text-gray-400 text-xs">
+                        {searchTerm ? "Nenhum produto encontrado para sua busca." : "Nenhum dado de produto disponível."}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {searchTerm && filteredProducts.length > 0 && (
+                    <TableRow className="bg-gray-50/50 border-t-2 border-gray-100">
+                      <TableCell colSpan={3} className="text-xs font-black text-gray-900 uppercase tracking-wider">Total Filtrado</TableCell>
+                      <TableCell className="text-right font-black text-[#EE4D2D]">
+                        {formatCurrency(filteredProducts.reduce((sum: number, p: any) => sum + p.revenue, 0))}
+                      </TableCell>
+                      <TableCell className="text-right font-black text-gray-900">
+                        {filteredProducts.reduce((sum: number, p: any) => sum + p.clicks, 0)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Seção de Sub IDs - Gráfico de Pizza */}
         {campaignStats && campaignStats.length > 0 && (
