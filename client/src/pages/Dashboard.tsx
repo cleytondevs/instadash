@@ -1160,9 +1160,19 @@ export default function Dashboard() {
                               <div className="w-2 h-2 rounded-full bg-[#EE4D2D]" />
                               <span className="text-sm font-black text-gray-900">{item.subId}</span>
                             </div>
-                            <div className="text-right">
-                              <span className="text-[10px] font-black text-gray-400 uppercase block">Receita</span>
-                              <span className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</span>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 px-2 text-[10px] font-black uppercase tracking-tighter rounded-lg border-gray-200 hover:bg-gray-50"
+                                onClick={() => setLocation(`/campaign/${encodeURIComponent(item.subId)}`)}
+                              >
+                                Ver Painel
+                              </Button>
+                              <div className="text-right">
+                                <span className="text-[10px] font-black text-gray-400 uppercase block">Receita</span>
+                                <span className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</span>
+                              </div>
                             </div>
                           </div>
 

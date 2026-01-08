@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/Dashboard";
-import CampaignDetails from "@/pages/CampaignDetails";
+import CampaignPanel from "@/pages/CampaignPanel";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import DataDeletion from "@/pages/DataDeletion";
@@ -14,7 +14,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
-      <Route path="/campaign/:subId" component={CampaignDetails} />
+      <Route path="/campaign/:subId" component={CampaignPanel} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/data-deletion" component={DataDeletion} />
