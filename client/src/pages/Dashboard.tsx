@@ -682,7 +682,7 @@ export default function Dashboard() {
       }
 
       const { error: expError } = await supabase
-        .from("expenses")
+        .from("campaign_expenses")
         .insert([{
           user_id: user.id,
           campaign_sheet_id: campaignSheetId,
@@ -1025,12 +1025,17 @@ export default function Dashboard() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="w-[95vw] max-w-lg rounded-2xl sm:rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
-                <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 sm:p-8 text-white">
-                  <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2 flex items-center gap-2">
-                    <FileText className="w-6 h-6" /> Gerenciamento de Planilha
-                  </h2>
-                  <p className="text-blue-100 text-sm font-medium opacity-90">Gerencie seus uploads e organize seus dados de vendas.</p>
-                </div>
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <FileText className="w-6 h-6" /> Gerenciamento de Planilha
+                        </DialogTitle>
+                        <DialogDescription>
+                          Gerencie seus uploads e organize seus dados de vendas.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-6 sm:p-8 text-white rounded-t-xl">
+                        <p className="text-blue-100 text-sm font-medium opacity-90">Ações rápidas e histórico.</p>
+                      </div>
                 
                 <div className="p-6 sm:p-8 space-y-6">
                   <div className="space-y-4">
@@ -1082,12 +1087,17 @@ export default function Dashboard() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="w-[95vw] max-w-lg rounded-2xl sm:rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 sm:p-8 text-white">
-                  <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2 flex items-center gap-2">
-                    <BarChart3 className="w-6 h-6" /> Painel de Campanhas
-                  </h2>
-                  <p className="text-indigo-100 text-sm font-medium opacity-90">Acompanhe e gerencie o desempenho das suas campanhas ativas.</p>
-                </div>
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <BarChart3 className="w-6 h-6" /> Painel de Campanhas
+                        </DialogTitle>
+                        <DialogDescription>
+                          Acompanhe e gerencie o desempenho das suas campanhas ativas.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 sm:p-8 text-white rounded-t-xl">
+                        <p className="text-indigo-100 text-sm font-medium opacity-90">Análise de ROI e performance.</p>
+                      </div>
                 
                 <div className="p-6 sm:p-8 space-y-6">
                   <div className="space-y-4">

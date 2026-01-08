@@ -92,24 +92,6 @@ export async function setupTables() {
         is_manual BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
-      
-      CREATE TABLE IF NOT EXISTS campaign_sheets (
-        id SERIAL PRIMARY KEY,
-        sub_id TEXT UNIQUE NOT NULL,
-        title TEXT,
-        user_id TEXT REFERENCES users(id),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS campaign_expenses (
-        id SERIAL PRIMARY KEY,
-        campaign_sheet_id INTEGER REFERENCES campaign_sheets(id) ON DELETE CASCADE,
-        amount INTEGER NOT NULL,
-        date DATE NOT NULL,
-        description TEXT,
-        is_manual BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
-      );
 
       -- Garantir que as tabelas sejam expostas no schema public para a API
       GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres;
