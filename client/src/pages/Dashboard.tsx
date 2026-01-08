@@ -112,6 +112,8 @@ export default function Dashboard() {
 
   const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("today");
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
+  const [subIdForNewCampaign, setSubIdForNewCampaign] = useState<string | null>(null);
+  const [initialExpense, setInitialExpense] = useState("");
 
   const { data: stats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["dashboard-stats", timeFilter, user?.id],

@@ -1,0 +1,48 @@
+chunk-LPF6KSF2.js?v=c21512cd:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+Dashboard.tsx:1339 Uncaught ReferenceError: subIdForNewCampaign is not defined
+    at Dashboard (Dashboard.tsx:1339:30)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=c21512cd:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=c21512cd:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=c21512cd:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=c21512cd:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=c21512cd:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=c21512cd:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=c21512cd:19818:15)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=c21512cd:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=c21512cd:19190:13)
+Dashboard.tsx:1339 Uncaught ReferenceError: subIdForNewCampaign is not defined
+    at Dashboard (Dashboard.tsx:1339:30)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=c21512cd:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=c21512cd:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=c21512cd:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=c21512cd:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=c21512cd:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=c21512cd:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=c21512cd:19818:15)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=c21512cd:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=c21512cd:19190:13)
+chunk-LPF6KSF2.js?v=c21512cd:14080 The above error occurred in the <Dashboard> component:
+
+    at Dashboard (https://df3cca81-a0af-49f7-b2f3-629ad094d945-00-14auq49l0mxbk.riker.replit.dev/src/pages/Dashboard.tsx:72:21)
+    at Route (https://df3cca81-a0af-49f7-b2f3-629ad094d945-00-14auq49l0mxbk.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c21512cd:322:16)
+    at Switch (https://df3cca81-a0af-49f7-b2f3-629ad094d945-00-14auq49l0mxbk.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c21512cd:378:17)
+    at Router
+    at Provider (https://df3cca81-a0af-49f7-b2f3-629ad094d945-00-14auq49l0mxbk.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-UF46VIAG.js?v=c21512cd:57:15)
+    at TooltipProvider (https://df3cca81-a0af-49f7-b2f3-629ad094d945-00-14auq49l0mxbk.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c21512cd:2242:5)
+    at QueryClientProvider (https://df3cca81-a0af-49f7-b2f3-629ad094d945-00-14auq49l0mxbk.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c21512cd:2747:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-LPF6KSF2.js?v=c21512cd:14080
+chunk-LPF6KSF2.js?v=c21512cd:9176 Uncaught ReferenceError: subIdForNewCampaign is not defined
+    at Dashboard (Dashboard.tsx:1339:30)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=c21512cd:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=c21512cd:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=c21512cd:15972:22)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=c21512cd:19806:22)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=c21512cd:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=c21512cd:19190:13)
+    at renderRootSync (chunk-LPF6KSF2.js?v=c21512cd:19169:15)
+    at recoverFromConcurrentError (chunk-LPF6KSF2.js?v=c21512cd:18786:28)
+    at performSyncWorkOnRoot (chunk-LPF6KSF2.js?v=c21512cd:18932:28)
