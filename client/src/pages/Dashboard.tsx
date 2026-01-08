@@ -133,8 +133,17 @@ export default function Dashboard() {
         ]);
 
         const salesData = salesRes.data || [];
-        if (salesData.length > 0) {
-          localStorage.setItem("last_upload_products", JSON.stringify(salesData));
+        
+        // Filtro rigoroso para o processamento de estatísticas no backend/supabase
+        const validSalesData = salesData.filter(s => 
+          s.product_name && 
+          s.product_name.trim() !== "" && 
+          s.product_name !== "Produto" &&
+          (Number(s.revenue) || 0) > 0
+        );
+
+        if (validSalesData.length > 0) {
+          localStorage.setItem("last_upload_products", JSON.stringify(validSalesData));
         }
 
         const expensesData = expensesRes.data || [];
@@ -145,7 +154,7 @@ export default function Dashboard() {
         }
 
         const now = new Date();
-        const filteredSales = salesData.filter(s => {
+        const filteredSales = validSalesData.filter(s => {
           const d = new Date(s.order_date);
           if (timeFilter === "today") return d.toDateString() === now.toDateString();
           if (timeFilter === "yesterday") {
