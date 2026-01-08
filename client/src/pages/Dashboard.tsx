@@ -1406,7 +1406,7 @@ export default function Dashboard() {
         </div>
 
         {/* Seção de Análise de Produtos - Tabela de Produtos Filtrados */}
-        {stats?.salesData && stats.salesData.length > 0 && (
+        {localProducts.length > 0 && (
           <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
