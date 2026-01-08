@@ -713,6 +713,16 @@ export default function Dashboard() {
 
       if (salesError) throw salesError;
 
+      const { data: allExpenses, error: expError } = await supabase
+        .from("campaign_expenses")
+        .select("*");
+      
+      const { data: campaignSheetsFull, error: sheetError } = await supabase
+        .from("campaign_sheets")
+        .select("*");
+
+      if (expError || sheetError) console.error("Erro ao carregar gastos/planilhas", expError || sheetError);
+
       const now = new Date();
       
       const validSales = (allSales || []).filter(s => {
@@ -746,7 +756,39 @@ export default function Dashboard() {
       });
 
       return Object.entries(revenueBySubId)
-        .map(([subId, revenue]) => ({ subId, revenue }))
+        .map(([subId, revenue]) => {
+          // Busca gastos para este Sub ID no período
+          const subIdExpenses = (allExpenses || [])
+            .filter(e => {
+              const sheet = campaignSheetsFull?.find(cs => cs.id === e.campaign_sheet_id);
+              if (!sheet || sheet.sub_id !== subId) return false;
+              
+              const d = new Date(e.date);
+              if (timeFilter === "today") return d.toDateString() === now.toDateString();
+              if (timeFilter === "yesterday") {
+                const y = new Date(now); y.setDate(now.getDate() - 1);
+                return d.toDateString() === y.toDateString();
+              }
+              if (timeFilter === "weekly") {
+                const w = new Date(now); w.setDate(now.getDate() - 7);
+                return d >= w;
+              }
+              if (timeFilter === "monthly") {
+                const m = new Date(now); m.setMonth(now.getMonth() - 1);
+                return d >= m;
+              }
+              return true;
+            })
+            .reduce((sum, e) => sum + e.amount, 0);
+
+          return { 
+            subId, 
+            revenue, 
+            expenses: subIdExpenses,
+            profit: revenue - subIdExpenses,
+            roi: subIdExpenses > 0 ? ((revenue - subIdExpenses) / subIdExpenses) * 100 : 0
+          };
+        })
         .sort((a, b) => b.revenue - a.revenue);
     },
     enabled: !!user
@@ -1119,6 +1161,14 @@ export default function Dashboard() {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</p>
+                            <p className={`text-[10px] font-bold ${item.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              Lucro: {formatCurrency(item.profit)}
+                            </p>
+                            {item.expenses > 0 && (
+                              <p className="text-[9px] text-gray-400 font-medium">
+                                ROI: {item.roi.toFixed(0)}%
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))}
