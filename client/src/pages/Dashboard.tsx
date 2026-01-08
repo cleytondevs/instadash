@@ -1065,7 +1065,11 @@ export default function Dashboard() {
                         <div 
                           key={index} 
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 cursor-pointer transition-all group"
-                          onClick={() => setSubIdForExpense(item.subId)}
+                          onClick={async () => {
+                            setSubIdForExpense(item.subId);
+                            // O mutation addExpenseMutation já cuida de criar a planilha se ela não existir
+                            // e salvar o gasto individual no banco de dados.
+                          }}
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5] }} />
