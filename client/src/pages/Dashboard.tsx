@@ -1342,7 +1342,9 @@ export default function Dashboard() {
                <DialogContent className="w-[95vw] rounded-2xl">
                  <DialogHeader>
                    <DialogTitle>Criar Planilha: {subIdForNewCampaign}</DialogTitle>
-                   <DialogDescription>Quanto você gastou nesta campanha até agora?</DialogDescription>
+                   <DialogDescription>
+                     Informe o gasto inicial para esta nova campanha com Sub ID {subIdForNewCampaign}.
+                   </DialogDescription>
                  </DialogHeader>
                  <div className="py-4 space-y-4">
                    <div className="space-y-2">
