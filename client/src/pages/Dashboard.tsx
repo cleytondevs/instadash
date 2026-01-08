@@ -735,6 +735,15 @@ export default function Dashboard() {
 
         if (!matchesSearch) return false;
 
+        // Filtro adicional para remover produtos sem nome ou com receita zero
+        const hasValidName = p.productName && 
+          p.productName.trim() !== "" && 
+          p.productName !== "Produto";
+        
+        const hasValidRevenue = p.revenue > 0;
+
+        if (!hasValidName || !hasValidRevenue) return false;
+
         const productDate = new Date(p.orderDate);
         const now = new Date();
         
