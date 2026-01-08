@@ -167,7 +167,9 @@ export default function Dashboard() {
           .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
 
         const totalRevenue = videoRevenue + socialRevenue;
-        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0) + fbAdSpend;
+        
+        // Fix: Do not include campaign expenses/fbAdSpend in dashboard total expenses
+        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
         
         const productCounts: Record<string, number> = {};
         filteredSales.forEach((sale: any) => {
@@ -1444,7 +1446,7 @@ export default function Dashboard() {
                       </TableCell>
                     </TableRow>
                   )}
-                  {searchTerm && filteredProducts.length > 0 && (
+                  {filteredProducts.length > 0 && (
                     <TableRow className="bg-gray-50/50 border-t-2 border-gray-100">
                       <TableCell colSpan={3} className="text-xs font-black text-gray-900 uppercase tracking-wider">Total Filtrado</TableCell>
                       <TableCell className="text-right font-black text-[#EE4D2D]">
