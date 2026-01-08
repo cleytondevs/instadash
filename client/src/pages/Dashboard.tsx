@@ -660,16 +660,42 @@ export default function Dashboard() {
   const [newSubId, setNewSubId] = useState("");
 
   const createCampaignMutation = useMutation({
-    mutationFn: async (subId: string) => {
+    mutationFn: async (data: { subId: string, expense: number }) => {
       if (!user) throw new Error("Usuário não autenticado");
-      const { data, error } = await supabase
+      
+      // Primeiro verifica se já existe para evitar o 409
+      const { data: existing } = await supabase
         .from("campaign_sheets")
-        .insert([{ sub_id: subId, user_id: user.id }])
+        .select("id")
+        .eq("sub_id", data.subId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        throw new Error("Já existe uma planilha para este Sub ID.");
+      }
+
+      const { data: sheet, error: sheetError } = await supabase
+        .from("campaign_sheets")
+        .insert([{ sub_id: data.subId, user_id: user.id }])
         .select()
         .single();
       
-      if (error) throw error;
-      return data;
+      if (sheetError) throw sheetError;
+
+      if (data.expense > 0) {
+        const { error: expError } = await supabase
+          .from("campaign_expenses")
+          .insert([{
+            campaign_sheet_id: sheet.id,
+            amount: data.expense,
+            description: "Gasto Inicial",
+            date: new Date().toISOString().split('T')[0]
+          }]);
+        if (expError) throw expError;
+      }
+
+      return sheet;
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-sheets", user?.id] });
@@ -899,6 +925,9 @@ export default function Dashboard() {
               <DialogContent className="sm:max-w-[500px] w-[95vw] rounded-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Gerenciamento de Vendas</DialogTitle>
+                  <DialogDescription>
+                    Gerencie suas planilhas de campanha e crie novos Sub IDs para monitoramento.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
