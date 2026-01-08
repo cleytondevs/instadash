@@ -793,6 +793,7 @@ export default function Dashboard() {
           .from("campaign_expenses")
           .insert([{
             campaign_sheet_id: sheet.id,
+            user_id: user.id,
             amount: data.expense,
             description: "Gasto Inicial",
             date: new Date().toISOString().split('T')[0]
