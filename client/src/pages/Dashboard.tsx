@@ -63,15 +63,18 @@ import Papa from "papaparse";
 export default function Dashboard() {
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Check for session on mount
   useMemo(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setIsInitializing(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setIsInitializing(false);
     });
 
     return () => subscription.unsubscribe();
@@ -767,7 +770,95 @@ export default function Dashboard() {
     staleTime: 1000 * 60 * 5,
   });
 
-  if (statsLoading || !user) return <DashboardSkeleton />;
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EE4D2D]"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-zinc-950 p-4">
+        <Card className="w-full max-w-md shadow-lg border-0">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#EE4D2D]/10 p-3 rounded-2xl">
+                <BarChart3 className="w-8 h-8 text-[#EE4D2D]" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight">InstaDash</CardTitle>
+            <CardDescription>
+              {authMode === "login" 
+                ? "Entre com sua conta para acessar o dashboard" 
+                : "Crie sua conta para começar a monitorar suas vendas"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="seu@email.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="focus-visible:ring-[#EE4D2D]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="focus-visible:ring-[#EE4D2D]"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-[#EE4D2D] hover:bg-[#D73211] text-white h-11"
+              >
+                {authMode === "login" ? "Entrar" : "Cadastrar"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-center text-muted-foreground">
+              {authMode === "login" ? (
+                <>
+                  Não tem uma conta?{" "}
+                  <button 
+                    onClick={() => setAuthMode("signup")}
+                    className="text-[#EE4D2D] hover:underline font-medium"
+                  >
+                    Cadastre-se
+                  </button>
+                </>
+              ) : (
+                <>
+                  Já tem uma conta?{" "}
+                  <button 
+                    onClick={() => setAuthMode("login")}
+                    className="text-[#EE4D2D] hover:underline font-medium"
+                  >
+                    Faça login
+                  </button>
+                </>
+              )}
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (statsLoading) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 sm:pb-20 font-sans">
