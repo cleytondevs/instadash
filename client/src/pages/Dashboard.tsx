@@ -108,7 +108,10 @@ export default function Dashboard() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [debugHeaders, setDebugHeaders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [localProducts, setLocalProducts] = useState<any[]>([]);
+  const [localProducts, setLocalProducts] = useState<any[]>(() => {
+    const saved = localStorage.getItem("last_upload_products");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
   const [isConnectingFb, setIsConnectingFb] = useState(false);
 
@@ -352,6 +355,7 @@ export default function Dashboard() {
 
         uploadMutation.mutate(sales);
         setLocalProducts(sales);
+        localStorage.setItem("last_upload_products", JSON.stringify(sales));
       },
       error: (error) => {
         setIsUploading(false);
@@ -729,16 +733,40 @@ export default function Dashboard() {
           orderId: p.order_id || p.orderId || p.ID || p["Order ID"],
           subId: subIdValue && subIdValue !== "-" ? String(subIdValue).trim() : "-",
           revenue: p.revenue,
-          clicks: p.clicks
+          clicks: p.clicks,
+          orderDate: p.order_date || p.orderDate || p.Data || p["Order Date"]
         };
       })
       .filter((p: any) => {
         const search = searchTerm.toLowerCase();
-        return (
+        const matchesSearch = (
           p.productName?.toLowerCase().includes(search) ||
           p.orderId?.toLowerCase().includes(search) ||
           p.subId?.toLowerCase().includes(search)
         );
+
+        if (!matchesSearch) return false;
+
+        const productDate = new Date(p.orderDate);
+        const now = new Date();
+        
+        if (timeFilter === "today") {
+          return productDate.toDateString() === now.toDateString();
+        } else if (timeFilter === "yesterday") {
+          const yesterday = new Date(now);
+          yesterday.setDate(now.getDate() - 1);
+          return productDate.toDateString() === yesterday.toDateString();
+        } else if (timeFilter === "weekly") {
+          const oneWeekAgo = new Date(now);
+          oneWeekAgo.setDate(now.getDate() - 7);
+          return productDate >= oneWeekAgo;
+        } else if (timeFilter === "monthly") {
+          const oneMonthAgo = new Date(now);
+          oneMonthAgo.setMonth(now.getMonth() - 1);
+          return productDate >= oneMonthAgo;
+        }
+        
+        return true;
       });
 
     // Ordenar: primeiro os que têm Sub ID (diferente de "-"), depois organizar alfabeticamente por Sub ID
@@ -755,7 +783,7 @@ export default function Dashboard() {
       
       return 0;
     });
-  }, [stats?.salesData, localProducts, searchTerm]);
+  }, [stats?.salesData, localProducts, searchTerm, timeFilter]);
 
   const deleteBatchMutation = useMutation({
     mutationFn: async (batchId: string) => {
