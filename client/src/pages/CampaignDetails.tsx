@@ -116,10 +116,9 @@ export default function CampaignDetails() {
           .from("campaign_expenses")
           .insert([{
             campaign_sheet_id: campaign.id,
-            user_id: user.id,
             amount: amountCents,
             date: date,
-            is_manual: true
+            description: "Lançamento Manual"
           }]);
         if (error) {
           console.error("Erro Supabase (Expenses):", error);
@@ -325,8 +324,8 @@ export default function CampaignDetails() {
                     const loss = dailyExpenses[date] || 0;
                     const balance = gain - loss;
                     
-                    // Encontrar IDs de lançamentos manuais para esta data
-                    const manualExpense = campaign?.campaign_expenses?.find((e: any) => e.date === date && e.is_manual);
+                    // Encontrar lançamentos para esta data
+                    const manualExpense = campaign?.campaign_expenses?.find((e: any) => e.date === date);
                     const manualGain = sales?.find((s: any) => new Date(s.order_date).toISOString().split('T')[0] === date && s.is_manual);
 
                     return (
