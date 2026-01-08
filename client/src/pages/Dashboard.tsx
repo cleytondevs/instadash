@@ -315,7 +315,7 @@ export default function Dashboard() {
           const orderId = getVal(["ID do Pedido", "Order ID", "Nº do pedido", "Número do pedido", "Referência", "Order No."]);
           const rawRevenue = getVal(["Receita Total", "Total Revenue", "Preço Original", "Total do pedido", "Valor", "Preço", "Order Amount", "Total"]);
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
-          const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product"]);
+          const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product", "Product Name (Optional)"]);
           const rawClicks = getVal(["Cliques gerados pelos links promocionais do afiliado", "Cliques no produto", "Cliques", "Clicks", "Número de cliques", "Visualizações de página", "Product Clicks", "Item Clicks"]);
           const rawStatus = getVal(["Status do pedido", "Order Status", "Status", "Situação"]);
 
@@ -336,7 +336,7 @@ export default function Dashboard() {
             orderDate: rawDate || new Date().toISOString(),
             revenue: isNaN(revenueCents) ? 0 : revenueCents,
             source: source,
-            productName: productName ? String(productName).trim() : "Produto Indefinido",
+            productName: productName ? String(productName).trim() : "Produto",
             clicks: parseInt(String(rawClicks || "0"), 10) || 0
           };
         }).filter(s => s !== null && s.orderId && s.revenue > 0);
