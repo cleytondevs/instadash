@@ -1040,33 +1040,7 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
-          <KPICard
-            title="Gastei"
-            value={formatCurrency(stats?.totalExpenses || 0)}
-            icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
-            trend={0}
-            color="orange"
-            loading={statsLoading}
-          />
-          <KPICard
-            title="Ganhei"
-            value={formatCurrency(stats?.totalRevenue || 0)}
-            icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
-            trend={0}
-            color="green"
-            loading={statsLoading}
-          />
-          <KPICard
-            title="Lucro"
-            value={formatCurrency(stats?.netProfit || 0)}
-            icon={stats?.netProfit >= 0 ? <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" /> : <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6" />}
-            trend={0}
-            color={stats?.netProfit >= 0 ? "blue" : "red"}
-            loading={statsLoading}
-            isProfit
-          />
-        </div>
+        {/* KPI Cards removed by user request */}
 
         {stats?.topProduct && (
           <div className="animate-in fade-in zoom-in duration-700 delay-200">
