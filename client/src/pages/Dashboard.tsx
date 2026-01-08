@@ -26,7 +26,7 @@ import {
   PieChart,
   MousePointerClick
 } from "lucide-react";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,8 +67,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Check for session on mount
-  useMemo(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setIsInitializing(false);
@@ -85,6 +84,7 @@ export default function Dashboard() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("today");
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +117,11 @@ export default function Dashboard() {
     }
   });
 
+  const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
+  const [isConnectingFb, setIsConnectingFb] = useState(false);
+  const [subIdForNewCampaign, setSubIdForNewCampaign] = useState<string | null>(null);
+  const [initialExpense, setInitialExpense] = useState("");
+
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<any>({
     queryKey: ["dashboard-stats", timeFilter, user?.id],
     queryFn: async () => {
@@ -128,7 +133,6 @@ export default function Dashboard() {
         ]);
 
         const salesData = salesRes.data || [];
-        // Se temos dados no banco, vamos atualizar o localProducts para garantir persistência real
         if (salesData.length > 0) {
           localStorage.setItem("last_upload_products", JSON.stringify(salesData));
         }
@@ -168,8 +172,6 @@ export default function Dashboard() {
           .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
 
         const totalRevenue = videoRevenue + socialRevenue;
-        
-        // Fix: Do not include campaign expenses/fbAdSpend in dashboard total expenses
         const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
         
         const productCounts: Record<string, number> = {};
@@ -224,102 +226,7 @@ export default function Dashboard() {
         throw err;
       }
     },
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const [fbConfig, setFbConfig] = useState({ appId: "", appSecret: "" });
-  const [isConnectingFb, setIsConnectingFb] = useState(false);
-
-  const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("today");
-  const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
-  const [subIdForNewCampaign, setSubIdForNewCampaign] = useState<string | null>(null);
-  const [initialExpense, setInitialExpense] = useState("");
-
-
-        const now = new Date();
-        const filteredSales = salesData.filter(s => {
-          const d = new Date(s.order_date);
-          if (timeFilter === "today") return d.toDateString() === now.toDateString();
-          if (timeFilter === "yesterday") {
-            const y = new Date(now); y.setDate(now.getDate() - 1);
-            return d.toDateString() === y.toDateString();
-          }
-          if (timeFilter === "weekly") {
-            const w = new Date(now); w.setDate(now.getDate() - 7);
-            return d >= w;
-          }
-          if (timeFilter === "monthly") {
-            const m = new Date(now); m.setMonth(now.getMonth() - 1);
-            return d >= m;
-          }
-          return true;
-        });
-
-        const videoRevenue = filteredSales
-          .filter((s: any) => s.source === 'shopee_video')
-          .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
-
-        const socialRevenue = filteredSales
-          .filter((s: any) => s.source === 'social_media')
-          .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
-
-        const totalRevenue = videoRevenue + socialRevenue;
-        
-        // Fix: Do not include campaign expenses/fbAdSpend in dashboard total expenses
-        const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
-        
-        const productCounts: Record<string, number> = {};
-        filteredSales.forEach((sale: any) => {
-          if (sale.product_name) {
-            productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
-          }
-        });
-
-        let topProduct = null;
-        let maxOrders = 0;
-        for (const [name, count] of Object.entries(productCounts)) {
-          if (count > maxOrders) {
-            maxOrders = count;
-            topProduct = { name, orders: count };
-          }
-        }
-
-        const categoryData = Object.entries(productCounts)
-          .map(([name, value]) => {
-            let category = "Outros";
-            const lowerName = name.toLowerCase();
-            if (lowerName.includes("creme") || lowerName.includes("shampoo") || lowerName.includes("maquiagem") || lowerName.includes("pele")) category = "Cosméticos";
-            else if (lowerName.includes("fone") || lowerName.includes("celular") || lowerName.includes("usb") || lowerName.includes("eletrônico")) category = "Eletrônicos";
-            else if (lowerName.includes("camisa") || lowerName.includes("calça") || lowerName.includes("vestido")) category = "Vestuário";
-            else if (lowerName.includes("casa") || lowerName.includes("cozinha") || lowerName.includes("decoração")) category = "Casa";
-            return { name, value, category };
-          });
-
-        const categorySummary = categoryData.reduce((acc: Record<string, number>, item) => {
-          acc[item.category] = (acc[item.category] || 0) + item.value;
-          return acc;
-        }, {});
-
-        return {
-          totalRevenue,
-          videoRevenue,
-          socialRevenue,
-          totalExpenses,
-          netProfit: totalRevenue - totalExpenses,
-          totalOrders: filteredSales.length,
-          totalClicks: filteredSales.reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
-          socialClicks: filteredSales
-            .filter((s: any) => s.source === 'social_media')
-            .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
-          topProduct,
-          chartData: Object.entries(categorySummary).map(([name, value]) => ({ name, value })),
-          salesData: filteredSales
-        };
-      } catch (err) {
-        console.error("Erro crítico na Dashboard:", err);
-        throw err;
-      }
-    },
+    enabled: !!user,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -340,15 +247,11 @@ export default function Dashboard() {
           batch_id: batchId
         }));
         
-        console.log("Inserindo vendas para o usuário:", user.id);
         const { error: insertError } = await supabase
           .from("sales")
           .upsert(salesToInsert, { onConflict: 'order_id' });
 
-        if (insertError) {
-          console.error("Erro no upsert:", insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
       } catch (err: any) {
         throw new Error(`Erro: ${err.message}`);
       }
@@ -418,8 +321,7 @@ export default function Dashboard() {
           const rawDate = getVal(["Data do Pedido", "Order Creation Date", "Data de criação do pedido", "Hora do pedido", "Data", "Order Time"]);
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product", "Product Name (Optional)"]);
           const rawClicks = getVal(["Cliques gerados pelos links promocionais do afiliado", "Cliques no produto", "Cliques", "Clicks", "Número de cliques", "Visualizações de página", "Product Clicks", "Item Clicks"]);
-          const rawStatus = getVal(["Status do pedido", "Order Status", "Status", "Situação"]);
-
+          
           if (!orderId) return null;
 
           let revenueCents = 0;
@@ -428,7 +330,6 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
-          // Lógica: Se tiver Sub ID -> Redes Sociais. Caso contrário -> Shopee Video.
           const source = subId ? "social_media" : "shopee_video";
           
           return {
@@ -450,7 +351,6 @@ export default function Dashboard() {
         uploadMutation.mutate(sales);
         setLocalProducts(sales);
         localStorage.setItem("last_upload_products", JSON.stringify(sales));
-        console.log("Persistindo localProducts:", sales.length);
       },
       error: (error) => {
         setIsUploading(false);
@@ -478,7 +378,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Inicializa o SDK do Facebook dinamicamente se ainda não estiver carregado
     if (!(window as any).FB) {
       const script = document.createElement('script');
       script.src = "https://connect.facebook.net/en_US/sdk.js";
@@ -642,8 +541,6 @@ export default function Dashboard() {
     }
 
     setIsFetchingAds(true);
-    
-    // Obter data de ontem para o relatório
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
@@ -654,7 +551,6 @@ export default function Dashboard() {
       { fields: 'id,name,account_id' },
       (response: any) => {
         if (response && !response.error) {
-          // Para cada conta, buscar os insights de ontem
           const accountPromises = response.data.map((acc: any) => {
             return new Promise((resolve) => {
               (window as any).FB.api(
@@ -712,7 +608,6 @@ export default function Dashboard() {
       
       const stats = await Promise.all(sheets.map(async (sheet) => {
         let salesQuery = supabase.from("sales").select("revenue").eq("sub_id", sheet.sub_id);
-        
         const now = new Date();
         if (timeFilter === "today") {
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -728,23 +623,17 @@ export default function Dashboard() {
           salesQuery = salesQuery.gte("order_date", oneWeekAgo.toISOString());
         } else if (timeFilter === "monthly") {
           const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          oneMonthAgo.setMonth(now.getMonth() - 1);
           salesQuery = salesQuery.gte("order_date", oneMonthAgo.toISOString());
         }
-
-        const { data: sales } = await salesQuery;
-        const { data: expenses } = await supabase.from("campaign_expenses").select("amount").eq("campaign_sheet_id", sheet.id);
         
-        const totalRev = sales?.reduce((sum, s) => sum + s.revenue, 0) || 0;
-        const totalExp = expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
+        const { data: sales, error: salesError } = await salesQuery;
+        if (salesError) throw salesError;
         
-        return {
-          subId: sheet.sub_id,
-          revenue: totalRev,
-          expense: totalExp,
-          profit: totalRev - totalExp
-        };
+        const revenue = (sales || []).reduce((sum, s) => sum + s.revenue, 0);
+        return { subId: sheet.sub_id, revenue };
       }));
+      
       return stats;
     }
   });
@@ -755,18 +644,13 @@ export default function Dashboard() {
       if (!user) return [];
       const { data, error } = await supabase.from("campaign_sheets").select("sub_id").eq("user_id", user.id);
       if (error) throw error;
-      return data?.map(s => s.sub_id) || [];
+      return (data || []).map(s => s.sub_id);
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    enabled: !!user
   });
-
-  const [newSubId, setNewSubId] = useState("");
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: { subId: string, expense: number }) => {
-      if (!user) throw new Error("Usuário não autenticado");
-      
-      // Primeiro verifica se já existe para evitar o 409
       const { data: existing } = await supabase
         .from("campaign_sheets")
         .select("id")
@@ -816,7 +700,6 @@ export default function Dashboard() {
   });
 
   const filteredProducts = useMemo(() => {
-    // Priority for localProducts if we just uploaded, otherwise stats?.salesData
     const dataToFilter = localProducts.length > 0 ? localProducts : (stats?.salesData || []);
     if (!dataToFilter.length) return [];
     
@@ -937,11 +820,11 @@ export default function Dashboard() {
                 <BarChart3 className="w-8 h-8 text-[#EE4D2D]" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight">InstaDash</CardTitle>
-            <CardDescription>
-              {authMode === "login" 
-                ? "Entre com sua conta para acessar o dashboard" 
-                : "Crie sua conta para começar a monitorar suas vendas"}
+            <CardTitle className="text-2xl font-black text-zinc-900 dark:text-zinc-50">
+              InstaDash
+            </CardTitle>
+            <CardDescription className="text-zinc-500 dark:text-zinc-400 font-medium">
+              Entre para gerenciar suas vendas da Shopee
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -954,8 +837,8 @@ export default function Dashboard() {
                   placeholder="seu@email.com" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="focus-visible:ring-[#EE4D2D]"
+                  required 
+                  className="rounded-xl border-zinc-200 focus:ring-[#EE4D2D] focus:border-[#EE4D2D]"
                 />
               </div>
               <div className="space-y-2">
@@ -965,69 +848,147 @@ export default function Dashboard() {
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="focus-visible:ring-[#EE4D2D]"
+                  required 
+                  className="rounded-xl border-zinc-200 focus:ring-[#EE4D2D] focus:border-[#EE4D2D]"
                 />
               </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-[#EE4D2D] hover:bg-[#D73211] text-white h-11"
-              >
-                {authMode === "login" ? "Entrar" : "Cadastrar"}
+              <Button type="submit" className="w-full bg-[#EE4D2D] hover:bg-[#D73211] text-white font-bold h-11 rounded-xl transition-all shadow-md active:scale-[0.98]">
+                {authMode === "login" ? "Entrar" : "Criar Conta"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-muted-foreground">
-              {authMode === "login" ? (
-                <>
-                  Não tem uma conta?{" "}
-                  <button 
-                    onClick={() => setAuthMode("signup")}
-                    className="text-[#EE4D2D] hover:underline font-medium"
-                  >
-                    Cadastre-se
-                  </button>
-                </>
-              ) : (
-                <>
-                  Já tem uma conta?{" "}
-                  <button 
-                    onClick={() => setAuthMode("login")}
-                    className="text-[#EE4D2D] hover:underline font-medium"
-                  >
-                    Faça login
-                  </button>
-                </>
-              )}
-            </div>
+          <CardFooter className="flex justify-center">
+            <Button 
+              variant="link" 
+              className="text-zinc-500 hover:text-[#EE4D2D] font-bold"
+              onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+            >
+              {authMode === "login" ? "Não tem conta? Cadastre-se" : "Já tem conta? Entre aqui"}
+            </Button>
           </CardFooter>
         </Card>
       </div>
     );
   }
 
-  if (statsLoading) return <DashboardSkeleton />;
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 sm:pb-20 font-sans">
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 overflow-hidden">
-            <div className="w-8 h-8 flex-shrink-0 bg-[#EE4D2D] rounded-lg flex items-center justify-center shadow-md">
-              <BarChart3 className="text-white w-5 h-5" />
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
+            <div className="bg-[#EE4D2D] p-2 sm:p-2.5 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-200 group-hover:scale-110 transition-transform">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="flex flex-col min-w-0">
-              <h1 className="text-sm sm:text-lg font-bold text-gray-900 truncate">
-                InstaDash <span className="text-[#EE4D2D] font-normal hidden sm:inline">Shopee</span>
-              </h1>
-              <p className="text-[10px] text-gray-400 truncate font-medium">{user?.email}</p>
+            <div>
+              <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tighter leading-none">InstaDash</h1>
+              <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">Analytics Pro</span>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-500 font-bold hover:text-red-500">
-              Sair
-            </Button>
+          
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden sm:block text-right mr-2">
+              <p className="text-xs font-black text-gray-900 truncate max-w-[150px]">{user.email}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase">Dashboard Ativo</p>
+            </div>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-xl border-gray-200 hover:bg-gray-50 h-9 w-9 sm:h-10 sm:w-10 transition-colors">
+                  <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-lg rounded-2xl sm:rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+                <div className="bg-gradient-to-br from-[#EE4D2D] to-[#D73211] p-6 sm:p-8 text-white">
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2 flex items-center gap-2">
+                    <Sparkles className="w-6 h-6" /> Configurações
+                  </h2>
+                  <p className="text-orange-100 text-sm font-medium opacity-90">Personalize sua experiência e conecte suas contas de anúncio.</p>
+                </div>
+                
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                      <Facebook className="w-4 h-4" /> Facebook Ads (Meta)
+                    </h3>
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="appId" className="text-xs font-bold text-gray-600">App ID do Aplicativo</Label>
+                        <Input 
+                          id="appId" 
+                          placeholder="Ex: 123456789012345" 
+                          className="rounded-xl border-gray-200 h-11"
+                          value={fbConfig.appId}
+                          onChange={(e) => setFbConfig({...fbConfig, appId: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="appSecret" className="text-xs font-bold text-gray-600">App Secret</Label>
+                        <Input 
+                          id="appSecret" 
+                          type="password" 
+                          placeholder="••••••••••••••••" 
+                          className="rounded-xl border-gray-200 h-11"
+                          value={fbConfig.appSecret}
+                          onChange={(e) => setFbConfig({...fbConfig, appSecret: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button 
+                        onClick={handleSaveFbConfig}
+                        className="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold h-11 transition-all"
+                      >
+                        Salvar Chaves
+                      </Button>
+                      <Button 
+                        onClick={handleConnectFb}
+                        disabled={isConnectingFb}
+                        className="flex-1 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold h-11 transition-all shadow-md shadow-blue-100"
+                      >
+                        {isConnectingFb ? "Conectando..." : "Vincular Perfil"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-100">
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Package className="w-4 h-4" /> Histórico de Uploads
+                    </h3>
+                    <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                      {uploadBatches?.map((batch) => (
+                        <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter truncate">{batch.id}</p>
+                            <p className="text-xs font-bold text-gray-700">{new Date(batch.date).toLocaleDateString('pt-BR')} • {batch.count} vendas</p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg h-8 w-8"
+                            onClick={() => deleteBatchMutation.mutate(batch.id)}
+                            disabled={deleteBatchMutation.isPending}
+                          >
+                            <TrendingDown className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      {(!uploadBatches || uploadBatches.length === 0) && (
+                        <p className="text-center py-4 text-xs font-medium text-gray-400 italic">Nenhum upload realizado ainda.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleLogout}
+                    className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 font-black h-11 rounded-xl"
+                  >
+                    Encerrar Sessão
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
             <input 
               type="file" 
               accept=".csv" 
@@ -1035,362 +996,98 @@ export default function Dashboard() {
               ref={fileInputRef}
               onChange={handleFileUpload}
             />
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden sm:flex h-9 rounded-xl font-bold px-4 border-gray-200 gap-2">
-                  <Plus className="w-4 h-4" />
-                  Gerenciamento
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] w-[95vw] rounded-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Gerenciamento de Vendas</DialogTitle>
-                  <DialogDescription>
-                    Gerencie suas planilhas de campanha e crie novos Sub IDs para monitoramento.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase text-gray-400">Novo Sub ID</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="Ex: camp-face-01" 
-                        value={newSubId}
-                        onChange={(e) => setNewSubId(e.target.value)}
-                        className="rounded-xl"
-                      />
-                      <Button 
-                        onClick={() => {
-                          if (!newSubId) return;
-                          createCampaignMutation.mutate({ subId: newSubId, expense: 0 });
-                        }}
-                        disabled={createCampaignMutation.isPending}
-                        className="bg-[#EE4D2D] hover:bg-[#D73211] rounded-xl font-bold"
-                      >
-                        Criar
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2 pt-4 border-t">
-                    <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
-                    {campaignStats?.map((stat: any) => (
-                  <Link key={stat.subId} href={`/campaign/${encodeURIComponent(stat.subId)}`}>
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold truncate">{stat.subId}</p>
-                        <div className="flex gap-2 text-[9px] font-bold uppercase mt-1">
-                          <span className="text-green-600">Ganho: {formatCurrency(stat.revenue)}</span>
-                          <span className="text-red-500">Gasto: {formatCurrency(stat.expense)}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-xs font-black ${stat.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {formatCurrency(stat.profit)}
-                        </p>
-                        <p className="text-[8px] text-gray-400 uppercase font-bold">Balanço</p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-                {(!campaignStats || campaignStats.length === 0) && (
-                  <p className="text-center text-gray-500 py-8 text-xs">Nenhuma planilha de campanha criada ainda.</p>
-                )}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
             <Button 
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading || uploadMutation.isPending}
-              size="sm"
-              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white gap-2 font-bold shadow-sm h-9"
+              disabled={isUploading}
+              className="bg-[#EE4D2D] hover:bg-[#D73211] text-white font-bold px-4 sm:px-6 rounded-xl sm:rounded-2xl h-10 sm:h-12 flex items-center gap-2 shadow-lg shadow-orange-100 transition-all active:scale-95 text-xs sm:text-sm"
             >
               <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">{isUploading || uploadMutation.isPending ? "Processando..." : "Subir Planilha"}</span>
-              <span className="sm:hidden">{isUploading || uploadMutation.isPending ? "..." : "Planilha"}</span>
+              {isUploading ? "Enviando..." : "Subir Planilha"}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Barra de Navegação Mobile Fixa */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-2 py-2 flex sm:hidden items-center justify-around shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-        <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-[#EE4D2D] flex-1 hover:bg-transparent">
-          <BarChart3 className="w-5 h-5" />
-          <span className="text-[10px] font-bold">Resumo</span>
-        </Button>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent">
-              <Plus className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Planilhas</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[95vw] rounded-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Gerenciamento de Vendas</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-gray-500 uppercase">Minhas Planilhas</p>
-                {campaignSheets?.map((sheetSubId: string) => (
-                  <Link key={sheetSubId} href={`/campaign/${encodeURIComponent(sheetSubId)}`}>
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold truncate">{sheetSubId}</p>
-                        <p className="text-[10px] text-gray-500">Toque para gerenciar</p>
-                      </div>
-                      <TrendingUp className="w-4 h-4 text-emerald-500" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent">
-              <FileText className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Uploads</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[95vw] rounded-2xl">
-            <DialogHeader><DialogTitle>Histórico</DialogTitle></DialogHeader>
-            <div className="max-h-[300px] overflow-y-auto space-y-2 py-4 px-1">
-              {uploadBatches?.map((batch) => (
-                <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold truncate">{new Date(batch.date).toLocaleDateString('pt-BR')}</p>
-                    <p className="text-[10px] text-gray-500">{batch.count} vendas</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => deleteBatchMutation.mutate(batch.id)}>
-                    <AlertCircle className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="flex flex-col items-center gap-1 h-auto py-1.5 text-gray-500 flex-1 hover:bg-transparent"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          <TrendingUp className="w-5 h-5" />
-          <span className="text-[10px] font-bold">Topo</span>
-        </Button>
-      </nav>
-
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
-        {lastError && (
-          <div className="space-y-4">
-            <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800 rounded-2xl">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle className="font-bold text-sm sm:text-base">Atenção!</AlertTitle>
-              <AlertDescription className="text-xs sm:text-sm">
-                {lastError}
-              </AlertDescription>
-            </Alert>
-            
-            {debugHeaders.length > 0 && (
-              <Card className="border-dashed border-2 bg-gray-50/50 rounded-2xl">
-                <CardHeader className="py-3 sm:py-4 px-4 sm:px-6">
-                  <CardTitle className="text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
-                    <FileText className="w-4 h-4" />
-                    Colunas detectadas:
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-3 sm:pb-4 px-4 sm:px-6">
-                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                    {debugHeaders.map((h, i) => (
-                      <span key={i} className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-white border border-gray-200 rounded-lg text-[9px] sm:text-[10px] font-mono text-gray-500 shadow-sm">{h}</span>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Filtros e Histórico */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto w-full sm:w-auto scrollbar-hide">
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter">Olá! 🚀</h2>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-widest">Aqui está o resumo do seu lucro</p>
+          </div>
+          
+          <div className="inline-flex p-1 bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm w-full sm:w-auto">
             {(["today", "yesterday", "weekly", "monthly"] as const).map((filter) => (
-              <Button 
+              <button
                 key={filter}
-                variant={timeFilter === filter ? "default" : "ghost"} 
-                size="sm" 
                 onClick={() => setTimeFilter(filter)}
-                className={`rounded-lg whitespace-nowrap flex-1 sm:flex-initial text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-9 ${timeFilter === filter ? "bg-[#EE4D2D] text-white hover:bg-[#D73211]" : ""}`}
+                className={`flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${
+                  timeFilter === filter 
+                    ? "bg-[#EE4D2D] text-white shadow-md shadow-orange-100" 
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                }`}
               >
-                {filter === "today" ? "Hoje" : 
-                 filter === "yesterday" ? "Ontem" : 
-                 filter === "weekly" ? "7 Dias" : "30 Dias"}
-              </Button>
+                {filter === "today" ? "Hoje" : filter === "yesterday" ? "Ontem" : filter === "weekly" ? "7 Dias" : "30 Dias"}
+              </button>
             ))}
           </div>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 rounded-xl w-full sm:w-auto h-9 text-xs sm:text-sm">
-                <FileText className="w-4 h-4" />
-                Histórico de Uploads
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] w-[95vw] rounded-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-lg">Histórico de Uploads</DialogTitle>
-                <DialogDescription className="text-xs sm:text-sm">
-                  Visualize e gerencie os arquivos que você subiu.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="max-h-[300px] overflow-y-auto space-y-2 py-4 px-1">
-                {uploadBatches?.map((batch) => (
-                  <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">
-                        {new Date(batch.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-gray-500">{batch.count} vendas importadas</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 h-8 w-8 shrink-0"
-                      onClick={() => deleteBatchMutation.mutate(batch.id)}
-                      disabled={deleteBatchMutation.isPending}
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                {(!uploadBatches || uploadBatches.length === 0) && (
-                  <p className="text-center text-gray-500 py-8 text-xs sm:text-sm">Nenhum upload realizado ainda.</p>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
-        {/* Balanço Diário e Métricas Principais - Otimizado para Mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                Faturamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">{formatCurrency(stats?.totalRevenue || 0)}</div>
-              <p className="text-[10px] text-gray-400 font-medium mt-1">Total bruto recebido</p>
-            </CardContent>
-          </Card>
+        {lastError && (
+          <Alert variant="destructive" className="rounded-2xl sm:rounded-3xl border-none shadow-lg bg-red-50 text-red-900 animate-in fade-in slide-in-from-top-4 duration-500">
+            <AlertCircle className="h-5 w-5 !text-red-600" />
+            <AlertTitle className="font-black text-red-600">Ocorreu um erro</AlertTitle>
+            <AlertDescription className="font-medium opacity-90">{lastError}</AlertDescription>
+          </Alert>
+        )}
 
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <MousePointerClick className="w-3.5 h-3.5 text-orange-500" />
-                Cliques Shopee
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <div className="text-2xl sm:text-3xl font-black text-gray-900">{stats?.totalClicks || 0}</div>
-              <p className="text-[10px] text-gray-400 font-medium mt-1">Cliques nos produtos</p>
-            </CardContent>
-          </Card>
-
-          <Card className={`border-none shadow-sm overflow-hidden rounded-2xl hover-elevate transition-all ${stats && stats.netProfit >= 0 ? 'bg-emerald-50/50' : 'bg-red-50/50'}`}>
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className={`text-[10px] font-bold flex items-center gap-2 uppercase tracking-widest ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                <DollarSign className="w-3.5 h-3.5" />
-                Lucro Líquido
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <div className={`text-2xl sm:text-3xl font-black truncate ${stats && stats.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                {formatCurrency(stats?.netProfit || 0)}
-              </div>
-              <p className={`text-[10px] font-bold mt-1 ${stats && stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {stats && stats.totalRevenue > 0 ? ((stats.netProfit / stats.totalRevenue) * 100).toFixed(1) : 0}% Margem
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl hover-elevate transition-all">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-[10px] font-bold text-gray-400 flex items-center gap-2 uppercase tracking-widest">
-                <Share2 className="w-3.5 h-3.5 text-blue-600" />
-                Cliques Redes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <div className="text-2xl sm:text-3xl font-black text-gray-900">{stats?.socialClicks || 0}</div>
-              <p className="text-[10px] text-gray-400 font-medium mt-1">Total de cliques</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+          <KPICard
+            title="Gastei"
+            value={formatCurrency(stats?.totalExpenses || 0)}
+            icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
+            trend={0}
+            color="orange"
+            loading={statsLoading}
+          />
+          <KPICard
+            title="Ganhei"
+            value={formatCurrency(stats?.totalRevenue || 0)}
+            icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
+            trend={0}
+            color="green"
+            loading={statsLoading}
+          />
+          <KPICard
+            title="Lucro"
+            value={formatCurrency(stats?.netProfit || 0)}
+            icon={stats?.netProfit >= 0 ? <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" /> : <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6" />}
+            trend={0}
+            color={stats?.netProfit >= 0 ? "blue" : "red"}
+            loading={statsLoading}
+            isProfit
+          />
         </div>
 
-        {/* Produto Mais Vendido - Responsivo */}
         {stats?.topProduct && (
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#EE4D2D] to-orange-400 rounded-[1.5rem] sm:rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-            <Card className="relative border-none shadow-xl bg-white overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem]">
-              <div className="flex flex-col lg:flex-row">
-                {/* Lado Esquerdo - Info */}
-                <div className="flex-1 p-6 sm:p-8 lg:p-12 space-y-4 sm:space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-100 rounded-xl">
-                      <Trophy className="w-5 h-5 text-[#EE4D2D]" />
-                    </div>
-                    <span className="text-[#EE4D2D] font-black uppercase tracking-[0.2em] text-[10px] sm:text-xs">Top Performance</span>
-                  </div>
-                  
-                  <div className="space-y-2 sm:space-y-4">
-                    <h2 className="text-xl sm:text-3xl lg:text-5xl font-black text-gray-900 leading-tight tracking-tight sm:tracking-tighter">
-                      {stats.topProduct.name}
-                    </h2>
-                    <p className="text-sm sm:text-lg text-gray-500 font-medium max-w-lg">
-                      Produto com maior número de conversões no período selecionado.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-2">
-                    <div className="flex -space-x-2">
-                      {[1,2,3].map(i => (
-                        <div key={i} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 sm:border-4 border-white bg-gray-100 flex items-center justify-center">
-                          <Plus className="w-3 h-3 sm:w-4 h-4 text-gray-300" />
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] sm:text-sm font-bold text-gray-400">Destaque do período</p>
-                  </div>
+          <div className="animate-in fade-in zoom-in duration-700 delay-200">
+            <Card className="border-none shadow-sm bg-gradient-to-br from-zinc-900 to-zinc-800 text-white overflow-hidden rounded-2xl sm:rounded-3xl group">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+              <div className="relative p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-10">
+                <div className="bg-white/10 p-4 sm:p-6 rounded-3xl backdrop-blur-xl border border-white/10 group-hover:scale-110 transition-transform duration-500 shadow-2xl">
+                  <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.5)]" />
                 </div>
-
-                {/* Lado Direito/Baixo - Stats */}
-                <div className="w-full lg:w-[300px] bg-[#1E293B] p-6 sm:p-8 lg:p-12 flex flex-col justify-center items-center text-center space-y-6 sm:space-y-8">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-center gap-2 text-orange-400 mb-1 sm:mb-2">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Vendas</span>
+                <div className="flex-1 text-center md:text-left space-y-2">
+                  <p className="text-[10px] sm:text-xs font-black text-orange-400 uppercase tracking-[0.3em] opacity-80">Produto Campeão</p>
+                  <h3 className="text-xl sm:text-3xl font-black tracking-tight leading-tight truncate max-w-[300px] sm:max-w-md mx-auto md:mx-0">
+                    {stats.topProduct.name}
+                  </h3>
+                  <div className="flex items-center justify-center md:justify-start gap-4 pt-2">
+                    <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vendas</p>
+                      <p className="text-lg sm:text-2xl font-black text-white">{stats.topProduct.orders}</p>
                     </div>
-                    <p className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tighter">
-                      {stats.topProduct.orders}
-                    </p>
-                  </div>
-
-                  <div className="w-full h-px bg-white/10" />
-
-                  <div className="grid grid-cols-2 w-full gap-4">
-                    <div className="text-center">
-                      <p className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Impacto</p>
+                    <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Conversão</p>
                       <p className="text-lg sm:text-2xl font-black text-white">
                         {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
                       </p>
@@ -1406,7 +1103,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Divisão de Vendas - Responsivo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
           <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-2xl sm:rounded-3xl overflow-hidden group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-6 sm:pt-8 px-6 sm:px-8">
@@ -1526,8 +1222,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Seção de Análise de Produtos - Tabela de Produtos Filtrados */}
-        {localProducts.length > 0 && (
+        {filteredProducts.length > 0 && (
           <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
@@ -1556,13 +1251,6 @@ export default function Dashboard() {
                       <TableCell className="text-xs font-medium text-gray-500 text-right">{product.clicks}</TableCell>
                     </TableRow>
                   ))}
-                  {filteredProducts.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-gray-400 text-xs">
-                        {searchTerm ? "Nenhum produto encontrado para sua busca." : "Nenhum dado de produto disponível."}
-                      </TableCell>
-                    </TableRow>
-                  )}
                   {filteredProducts.length > 0 && (
                     <TableRow className="bg-gray-50/50 border-t-2 border-gray-100">
                       <TableCell colSpan={3} className="text-xs font-black text-gray-900 uppercase tracking-wider">Total Filtrado</TableCell>
@@ -1580,7 +1268,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Seção de Sub IDs - Gráfico de Pizza */}
         {campaignStats && campaignStats.length > 0 && (
           <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl sm:rounded-3xl">
             <CardHeader className="px-6 sm:px-8 pt-6 sm:pt-8">
@@ -1640,21 +1327,6 @@ export default function Dashboard() {
           </p>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] p-8 space-y-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1,2,3].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[1,2].map(i => <Skeleton key={i} className="h-48 w-full rounded-2xl" />)}
-        </div>
-      </div>
     </div>
   );
 }
