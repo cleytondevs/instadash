@@ -622,47 +622,59 @@ export default function Dashboard() {
   const { data: campaignStats } = useQuery({
     queryKey: ["campaign-sheets-stats", timeFilter],
     queryFn: async () => {
-      const { data: sheets, error: sheetsError } = await supabase.from("campaign_sheets").select("id, sub_id");
-      if (sheetsError) throw sheetsError;
+      if (!user) return [];
       
-      const stats = await Promise.all(sheets.map(async (sheet) => {
-        let salesQuery = supabase.from("sales").select("revenue, product_name").eq("sub_id", sheet.sub_id);
-        const now = new Date();
-        if (timeFilter === "today") {
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-          salesQuery = salesQuery.gte("order_date", today);
-        } else if (timeFilter === "yesterday") {
-          const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
-          salesQuery = salesQuery.eq("order_date", yesterdayStr);
-        } else if (timeFilter === "weekly") {
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-          salesQuery = salesQuery.gte("order_date", oneWeekAgo.toISOString());
-        } else if (timeFilter === "monthly") {
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(now.getMonth() - 1);
-          salesQuery = salesQuery.gte("order_date", oneMonthAgo.toISOString());
-        }
-        
-        const { data: sales, error: salesError } = await salesQuery;
-        if (salesError) throw salesError;
-        
-        // Filtro adicional para garantir que apenas vendas válidas contem para o gráfico de Sub ID
-        const validSales = (sales || []).filter(s => 
-          s.product_name && 
+      // Busca todas as vendas do usuário que possuem sub_id preenchido
+      const { data: allSales, error: salesError } = await supabase
+        .from("sales")
+        .select("revenue, sub_id, product_name, order_date")
+        .eq("user_id", user.id)
+        .not("sub_id", "is", null)
+        .not("sub_id", "eq", "-");
+
+      if (salesError) throw salesError;
+
+      const now = new Date();
+      
+      // Filtra as vendas pelo período selecionado e validade dos dados
+      const validSales = (allSales || []).filter(s => {
+        // Validação básica de dados (mesmo filtro usado no resto do app)
+        const hasValidName = s.product_name && 
           s.product_name.trim() !== "" && 
-          s.product_name !== "Produto" &&
-          (Number(s.revenue) || 0) > 0
-        );
+          s.product_name !== "Produto";
+        const hasValidRevenue = (Number(s.revenue) || 0) > 0;
         
-        const revenue = validSales.reduce((sum, s) => sum + s.revenue, 0);
-        return { subId: sheet.sub_id, revenue };
-      }));
-      
-      // Filtrar Sub IDs que acabaram ficando com receita zero após a limpeza
-      return stats.filter(s => s.revenue > 0);
+        if (!hasValidName || !hasValidRevenue) return false;
+
+        // Filtro de tempo
+        const d = new Date(s.order_date);
+        if (timeFilter === "today") return d.toDateString() === now.toDateString();
+        if (timeFilter === "yesterday") {
+          const y = new Date(now); y.setDate(now.getDate() - 1);
+          return d.toDateString() === y.toDateString();
+        }
+        if (timeFilter === "weekly") {
+          const w = new Date(now); w.setDate(now.getDate() - 7);
+          return d >= w;
+        }
+        if (timeFilter === "monthly") {
+          const m = new Date(now); m.setMonth(now.getMonth() - 1);
+          return d >= m;
+        }
+        return true;
+      });
+
+      // Agrupa a receita por Sub ID
+      const revenueBySubId: Record<string, number> = {};
+      validSales.forEach(sale => {
+        const subId = sale.sub_id;
+        revenueBySubId[subId] = (revenueBySubId[subId] || 0) + sale.revenue;
+      });
+
+      // Transforma em array para o gráfico
+      return Object.entries(revenueBySubId)
+        .map(([subId, revenue]) => ({ subId, revenue }))
+        .sort((a, b) => b.revenue - a.revenue);
     }
   });
 
