@@ -626,7 +626,7 @@ export default function Dashboard() {
       if (sheetsError) throw sheetsError;
       
       const stats = await Promise.all(sheets.map(async (sheet) => {
-        let salesQuery = supabase.from("sales").select("revenue").eq("sub_id", sheet.sub_id);
+        let salesQuery = supabase.from("sales").select("revenue, product_name").eq("sub_id", sheet.sub_id);
         const now = new Date();
         if (timeFilter === "today") {
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -649,11 +649,20 @@ export default function Dashboard() {
         const { data: sales, error: salesError } = await salesQuery;
         if (salesError) throw salesError;
         
-        const revenue = (sales || []).reduce((sum, s) => sum + s.revenue, 0);
+        // Filtro adicional para garantir que apenas vendas válidas contem para o gráfico de Sub ID
+        const validSales = (sales || []).filter(s => 
+          s.product_name && 
+          s.product_name.trim() !== "" && 
+          s.product_name !== "Produto" &&
+          (Number(s.revenue) || 0) > 0
+        );
+        
+        const revenue = validSales.reduce((sum, s) => sum + s.revenue, 0);
         return { subId: sheet.sub_id, revenue };
       }));
       
-      return stats;
+      // Filtrar Sub IDs que acabaram ficando com receita zero após a limpeza
+      return stats.filter(s => s.revenue > 0);
     }
   });
 
