@@ -1044,32 +1044,69 @@ export default function Dashboard() {
 
         {stats?.topProduct && (
           <div className="animate-in fade-in zoom-in duration-700 delay-200">
-            <Card className="border-none shadow-sm bg-gradient-to-br from-zinc-900 to-zinc-800 text-white overflow-hidden rounded-2xl sm:rounded-3xl group">
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-              <div className="relative p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-10">
-                <div className="bg-white/10 p-4 sm:p-6 rounded-3xl backdrop-blur-xl border border-white/10 group-hover:scale-110 transition-transform duration-500 shadow-2xl">
-                  <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.5)]" />
+            <Card className="border-none shadow-xl bg-white overflow-hidden rounded-3xl group relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 transition-all group-hover:bg-orange-100 group-hover:scale-110 duration-700"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-50 rounded-full -ml-24 -mb-24 blur-3xl opacity-50 transition-all group-hover:bg-blue-100 group-hover:scale-110 duration-700"></div>
+              
+              <div className="relative p-6 sm:p-10 flex flex-col md:flex-row items-center gap-8 sm:gap-12">
+                <div className="relative">
+                  <div className="bg-gradient-to-br from-orange-400 to-[#EE4D2D] p-5 sm:p-7 rounded-[2.5rem] shadow-2xl shadow-orange-200 group-hover:rotate-6 transition-transform duration-500">
+                    <Trophy className="h-10 w-10 sm:h-14 sm:w-14 text-white drop-shadow-md" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg border-2 border-white uppercase tracking-tighter">
+                    Top #1
+                  </div>
                 </div>
-                <div className="flex-1 text-center md:text-left space-y-2">
-                  <p className="text-[10px] sm:text-xs font-black text-orange-400 uppercase tracking-[0.3em] opacity-80">Produto Campeão</p>
-                  <h3 className="text-xl sm:text-3xl font-black tracking-tight leading-tight truncate max-w-[300px] sm:max-w-md mx-auto md:mx-0">
-                    {stats.topProduct.name}
-                  </h3>
-                  <div className="flex items-center justify-center md:justify-start gap-4 pt-2">
-                    <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
-                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vendas</p>
-                      <p className="text-lg sm:text-2xl font-black text-white">{stats.topProduct.orders}</p>
+
+                <div className="flex-1 text-center md:text-left space-y-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center md:justify-start gap-2">
+                      <span className="h-1 w-4 bg-[#EE4D2D] rounded-full"></span>
+                      <p className="text-[10px] sm:text-xs font-black text-[#EE4D2D] uppercase tracking-[0.3em]">Produto Campeão</p>
                     </div>
-                    <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
-                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Conversão</p>
-                      <p className="text-lg sm:text-2xl font-black text-white">
-                        {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
-                      </p>
+                    <h3 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tighter leading-none">
+                      {stats.topProduct.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
+                    <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 rounded-2xl border border-gray-100 group-hover:border-orange-100 transition-colors">
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Vendas</p>
+                      <div className="flex items-baseline gap-1">
+                        <p className="text-xl sm:text-3xl font-black text-gray-900">{stats.topProduct.orders}</p>
+                        <span className="text-[10px] font-bold text-gray-400">pedidos</span>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Rank</p>
-                      <p className="text-lg sm:text-2xl font-black text-orange-400">#1</p>
+
+                    <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 rounded-2xl border border-gray-100 group-hover:border-blue-100 transition-colors">
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Participação</p>
+                      <div className="flex items-baseline gap-1">
+                        <p className="text-xl sm:text-3xl font-black text-blue-600">
+                          {((stats.topProduct.orders / stats.totalOrders) * 100).toFixed(0)}%
+                        </p>
+                        <span className="text-[10px] font-bold text-gray-400">do total</span>
+                      </div>
                     </div>
+                    
+                    <div className="hidden lg:block h-12 w-px bg-gray-100 mx-2"></div>
+
+                    <div className="flex flex-col items-center md:items-start">
+                      <p className="text-[9px] sm:text-[10px] font-black text-[#EE4D2D] uppercase tracking-widest mb-1">Performance</p>
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Sparkles key={star} className="w-5 h-5 text-orange-400 fill-orange-400" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="hidden xl:flex flex-col items-end justify-center">
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Conversão Estimada</p>
+                    <p className="text-5xl font-black text-gray-900 tracking-tighter">
+                      High
+                    </p>
                   </div>
                 </div>
               </div>
