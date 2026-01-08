@@ -367,15 +367,42 @@ export default function Dashboard() {
           return;
         }
 
-        uploadMutation.mutate(sales);
-        setLocalProducts(sales);
-        localStorage.setItem("last_upload_products", JSON.stringify(sales));
-      },
-      error: (error) => {
-        setIsUploading(false);
-        setLastError(`Erro ao ler o arquivo: ${error.message}`);
+      // 5. Salva os Sub IDs novos no banco de dados automaticamente
+      const uniqueSubIds = Array.from(new Set(
+        sales
+          .map(s => s.subId)
+          .filter(id => id && id !== "" && id !== "-")
+      ));
+
+      if (uniqueSubIds.length > 0) {
+        const { data: existingSheets } = await supabase
+          .from("campaign_sheets")
+          .select("sub_id")
+          .eq("user_id", user.id)
+          .in("sub_id", uniqueSubIds);
+
+        const existingSubIds = new Set(existingSheets?.map(s => s.sub_id) || []);
+        const newSubIds = uniqueSubIds.filter(id => !existingSubIds.has(id));
+
+        if (newSubIds.length > 0) {
+          await supabase
+            .from("campaign_sheets")
+            .insert(newSubIds.map(id => ({
+              user_id: user.id,
+              sub_id: id
+            })));
+        }
       }
-    });
+
+      uploadMutation.mutate(sales);
+      setLocalProducts(sales);
+      localStorage.setItem("last_upload_products", JSON.stringify(sales));
+    },
+    error: (error) => {
+      setIsUploading(false);
+      setLastError(`Erro ao ler o arquivo: ${error.message}`);
+    }
+  });
     
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -627,13 +654,14 @@ export default function Dashboard() {
       if (!user) throw new Error("Usuário não autenticado");
       
       // Primeiro, garantir que a planilha de campanha existe
-      let { data: sheet, error: sheetError } = await supabase
+      const { data: sheet, error: sheetError } = await supabase
         .from("campaign_sheets")
         .select("id")
         .eq("user_id", user.id)
         .eq("sub_id", data.subId)
         .single();
       
+      let campaignSheetId;
       if (sheetError && sheetError.code === 'PGRST116') {
         // Criar se não existir
         const { data: newSheet, error: createError } = await supabase
@@ -642,16 +670,18 @@ export default function Dashboard() {
           .select()
           .single();
         if (createError) throw createError;
-        sheet = newSheet;
+        campaignSheetId = newSheet.id;
       } else if (sheetError) {
         throw sheetError;
+      } else {
+        campaignSheetId = sheet.id;
       }
 
       const { error: expError } = await supabase
         .from("expenses")
         .insert([{
           user_id: user.id,
-          campaign_sheet_id: sheet.id,
+          campaign_sheet_id: campaignSheetId,
           amount: data.amount,
           description: "Gasto Manual",
           date: new Date().toISOString().split('T')[0]
