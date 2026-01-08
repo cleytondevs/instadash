@@ -115,54 +115,47 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!user) return null;
       try {
-        let query = supabase.from("sales").select("*").eq("user_id", user.id);
-        
-        const now = new Date();
-        if (timeFilter === "today") {
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-          query = query.gte("order_date", today);
-        } else if (timeFilter === "yesterday") {
-          const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayStr = yesterday.toISOString().split('T')[0];
-          query = query.eq("order_date", yesterdayStr);
-        } else if (timeFilter === "weekly") {
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-          query = query.gte("order_date", oneWeekAgo.toISOString());
-        } else if (timeFilter === "monthly") {
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-          query = query.gte("order_date", oneMonthAgo.toISOString());
-        }
+        const [salesRes, expensesRes] = await Promise.all([
+          supabase.from("sales").select("*").eq("user_id", user.id),
+          supabase.from("expenses").select("*").eq("user_id", user.id)
+        ]);
 
-        const { data: salesData, error: salesError } = await query;
-        const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*").eq("user_id", user.id);
+        const salesData = salesRes.data || [];
+        const expensesData = expensesRes.data || [];
 
-        if (salesError || expensesError) {
-          console.error("Erro na busca de dados (Supabase):", salesError || expensesError);
-          // Fallback para evitar travamento da UI se for erro de cache
+        if (salesRes.error || expensesRes.error) {
+          console.error("Erro na busca de dados (Supabase):", salesRes.error || expensesRes.error);
           return {
-            totalRevenue: 0,
-            videoRevenue: 0,
-            socialRevenue: 0,
-            totalExpenses: 0,
-            netProfit: 0,
-            totalOrders: 0,
-            totalClicks: 0,
-            socialClicks: 0,
-            topProduct: null,
-            salesData: []
+            totalRevenue: 0, videoRevenue: 0, socialRevenue: 0, totalExpenses: 0,
+            netProfit: 0, totalOrders: 0, totalClicks: 0, socialClicks: 0,
+            topProduct: null, chartData: [], salesData: []
           };
         }
 
-        console.log("Dados recebidos:", { sales: salesData?.length, expenses: expensesData?.length });
+        const now = new Date();
+        const filteredSales = salesData.filter(s => {
+          const d = new Date(s.order_date);
+          if (timeFilter === "today") return d.toDateString() === now.toDateString();
+          if (timeFilter === "yesterday") {
+            const y = new Date(now); y.setDate(now.getDate() - 1);
+            return d.toDateString() === y.toDateString();
+          }
+          if (timeFilter === "weekly") {
+            const w = new Date(now); w.setDate(now.getDate() - 7);
+            return d >= w;
+          }
+          if (timeFilter === "monthly") {
+            const m = new Date(now); m.setMonth(now.getMonth() - 1);
+            return d >= m;
+          }
+          return true;
+        });
 
-        const videoRevenue = (salesData || [])
+        const videoRevenue = filteredSales
           .filter((s: any) => s.source === 'shopee_video')
           .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
 
-        const socialRevenue = (salesData || [])
+        const socialRevenue = filteredSales
           .filter((s: any) => s.source === 'social_media')
           .reduce((sum: number, s: any) => sum + (Number(s.revenue) || 0), 0);
 
@@ -170,7 +163,7 @@ export default function Dashboard() {
         const totalExpenses = (expensesData || []).reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0) + fbAdSpend;
         
         const productCounts: Record<string, number> = {};
-        (salesData || []).forEach((sale: any) => {
+        filteredSales.forEach((sale: any) => {
           if (sale.product_name) {
             productCounts[sale.product_name] = (productCounts[sale.product_name] || 0) + 1;
           }
@@ -187,14 +180,12 @@ export default function Dashboard() {
 
         const categoryData = Object.entries(productCounts)
           .map(([name, value]) => {
-            // Lógica simples de categorização baseada em palavras-chave
             let category = "Outros";
             const lowerName = name.toLowerCase();
             if (lowerName.includes("creme") || lowerName.includes("shampoo") || lowerName.includes("maquiagem") || lowerName.includes("pele")) category = "Cosméticos";
             else if (lowerName.includes("fone") || lowerName.includes("celular") || lowerName.includes("usb") || lowerName.includes("eletrônico")) category = "Eletrônicos";
             else if (lowerName.includes("camisa") || lowerName.includes("calça") || lowerName.includes("vestido")) category = "Vestuário";
             else if (lowerName.includes("casa") || lowerName.includes("cozinha") || lowerName.includes("decoração")) category = "Casa";
-            
             return { name, value, category };
           });
 
@@ -203,30 +194,27 @@ export default function Dashboard() {
           return acc;
         }, {});
 
-        const chartData = Object.entries(categorySummary).map(([name, value]) => ({ name, value }));
-
-        const stats = {
+        return {
           totalRevenue,
           videoRevenue,
           socialRevenue,
           totalExpenses,
           netProfit: totalRevenue - totalExpenses,
-          totalOrders: (salesData || []).length,
-          totalClicks: (salesData || []).reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
-          socialClicks: (salesData || [])
+          totalOrders: filteredSales.length,
+          totalClicks: filteredSales.reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
+          socialClicks: filteredSales
             .filter((s: any) => s.source === 'social_media')
             .reduce((sum: number, s: any) => sum + (Number(s.clicks) || 0), 0),
           topProduct,
-          chartData,
-          salesData: salesData || []
+          chartData: Object.entries(categorySummary).map(([name, value]) => ({ name, value })),
+          salesData: filteredSales
         };
-        
-        return stats;
       } catch (err) {
         console.error("Erro crítico na Dashboard:", err);
         throw err;
       }
-    }
+    },
+    staleTime: 1000 * 60 * 2,
   });
 
   const uploadMutation = useMutation({
@@ -660,7 +648,8 @@ export default function Dashboard() {
       const { data, error } = await supabase.from("campaign_sheets").select("sub_id").eq("user_id", user.id);
       if (error) throw error;
       return data?.map(s => s.sub_id) || [];
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
   const [newSubId, setNewSubId] = useState("");
@@ -752,11 +741,13 @@ export default function Dashboard() {
   });
 
   const { data: uploadBatches } = useQuery({
-    queryKey: ["upload-batches"],
+    queryKey: ["upload-batches", user?.id],
     queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from("sales")
         .select("batch_id, upload_date")
+        .eq("user_id", user.id)
         .order("upload_date", { ascending: false });
       
       if (error) throw error;
@@ -772,7 +763,8 @@ export default function Dashboard() {
         }
       });
       return Array.from(uniqueBatches.values());
-    }
+    },
+    staleTime: 1000 * 60 * 5,
   });
 
   if (statsLoading || !user) return <DashboardSkeleton />;
