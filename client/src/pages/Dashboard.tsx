@@ -379,7 +379,6 @@ export default function Dashboard() {
           const { data: existingSheets } = await supabase
             .from("campaign_sheets")
             .select("sub_id")
-            .eq("user_id", user.id)
             .in("sub_id", uniqueSubIds);
 
           const existingSubIds = new Set(existingSheets?.map(s => s.sub_id) || []);
@@ -389,7 +388,6 @@ export default function Dashboard() {
             await supabase
               .from("campaign_sheets")
               .insert(newSubIds.map(id => ({
-                user_id: user.id,
                 sub_id: id
               })));
           }
@@ -661,7 +659,6 @@ export default function Dashboard() {
       const { data: sheet, error: sheetError } = await supabase
         .from("campaign_sheets")
         .select("id")
-        .eq("user_id", user.id)
         .eq("sub_id", data.subId)
         .single();
       
@@ -670,7 +667,7 @@ export default function Dashboard() {
         // Criar se não existir
         const { data: newSheet, error: createError } = await supabase
           .from("campaign_sheets")
-          .insert([{ user_id: user.id, sub_id: data.subId }])
+          .insert([{ sub_id: data.subId }])
           .select()
           .single();
         if (createError) throw createError;
@@ -772,7 +769,6 @@ export default function Dashboard() {
         .from("campaign_sheets")
         .select("id")
         .eq("sub_id", data.subId)
-        .eq("user_id", user.id)
         .maybeSingle();
 
       if (existing) {
@@ -781,7 +777,7 @@ export default function Dashboard() {
 
       const { data: sheet, error: sheetError } = await supabase
         .from("campaign_sheets")
-        .insert([{ sub_id: data.subId, user_id: user.id }])
+        .insert([{ sub_id: data.subId }])
         .select()
         .single();
       
