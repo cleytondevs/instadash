@@ -322,7 +322,7 @@ export default function Dashboard() {
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product", "Product Name (Optional)"]);
           const rawClicks = getVal(["Cliques gerados pelos links promocionais do afiliado", "Cliques no produto", "Cliques", "Clicks", "Número de cliques", "Visualizações de página", "Product Clicks", "Item Clicks"]);
           
-          if (!orderId) return null;
+          if (!orderId || !productName || productName === "Produto") return null;
 
           let revenueCents = 0;
           if (rawRevenue) {
@@ -330,21 +330,28 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
+          if (isNaN(revenueCents) || revenueCents <= 0) return null;
+
           const source = subId ? "social_media" : "shopee_video";
           
           return {
             orderId: String(orderId).trim(),
             subId: subId ? String(subId).trim() : "-",
             orderDate: rawDate || new Date().toISOString(),
-            revenue: isNaN(revenueCents) ? 0 : revenueCents,
+            revenue: revenueCents,
             source: source,
-            productName: productName ? String(productName).trim() : "Produto",
+            productName: String(productName).trim(),
             clicks: parseInt(String(rawClicks || "0"), 10) || 0
           };
-        }).filter(s => s !== null && s.orderId && s.revenue > 0 && s.productName && s.productName !== "Produto");
+        }).filter(s => s !== null);
 
         if (sales.length === 0) {
-          setLastError("Não conseguimos identificar os dados de vendas automaticamente. Verifique se o arquivo é o exportado da Shopee.");
+          setLastError("A planilha não contém dados válidos de vendas (pedidos com nome e receita). Verifique o arquivo.");
+          toast({
+            variant: "destructive",
+            title: "Planilha Inválida",
+            description: "Nenhum dado de venda válido foi encontrado na planilha.",
+          });
           return;
         }
 
