@@ -620,33 +620,26 @@ export default function Dashboard() {
   };
 
   const { data: campaignStats } = useQuery({
-    queryKey: ["campaign-sheets-stats", timeFilter],
+    queryKey: ["campaign-sheets-stats", timeFilter, user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      // Busca todas as vendas do usuário que possuem sub_id preenchido
       const { data: allSales, error: salesError } = await supabase
         .from("sales")
         .select("revenue, sub_id, product_name, order_date")
-        .eq("user_id", user.id)
-        .not("sub_id", "is", null)
-        .not("sub_id", "eq", "-");
+        .eq("user_id", user.id);
 
       if (salesError) throw salesError;
 
       const now = new Date();
       
-      // Filtra as vendas pelo período selecionado e validade dos dados
       const validSales = (allSales || []).filter(s => {
-        // Validação básica de dados (mesmo filtro usado no resto do app)
-        const hasValidName = s.product_name && 
-          s.product_name.trim() !== "" && 
-          s.product_name !== "Produto";
+        const hasSubId = s.sub_id && s.sub_id !== "" && s.sub_id !== "-";
+        const hasValidName = s.product_name && s.product_name.trim() !== "" && s.product_name !== "Produto";
         const hasValidRevenue = (Number(s.revenue) || 0) > 0;
         
-        if (!hasValidName || !hasValidRevenue) return false;
+        if (!hasSubId || !hasValidName || !hasValidRevenue) return false;
 
-        // Filtro de tempo
         const d = new Date(s.order_date);
         if (timeFilter === "today") return d.toDateString() === now.toDateString();
         if (timeFilter === "yesterday") {
@@ -664,18 +657,17 @@ export default function Dashboard() {
         return true;
       });
 
-      // Agrupa a receita por Sub ID
       const revenueBySubId: Record<string, number> = {};
       validSales.forEach(sale => {
         const subId = sale.sub_id;
         revenueBySubId[subId] = (revenueBySubId[subId] || 0) + sale.revenue;
       });
 
-      // Transforma em array para o gráfico
       return Object.entries(revenueBySubId)
         .map(([subId, revenue]) => ({ subId, revenue }))
         .sort((a, b) => b.revenue - a.revenue);
-    }
+    },
+    enabled: !!user
   });
 
   const { data: campaignSheets } = useQuery({
