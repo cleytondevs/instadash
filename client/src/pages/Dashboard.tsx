@@ -110,7 +110,7 @@ export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<"today" | "yesterday" | "weekly" | "monthly">("today");
   const [uploads, setUploads] = useState<{ id: string, date: string, count: number }[]>([]);
 
-  const { data: stats, isLoading } = useQuery<any>({
+  const { data: stats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["dashboard-stats", timeFilter, user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -775,61 +775,7 @@ export default function Dashboard() {
     }
   });
 
-  if (isLoading) return <DashboardSkeleton />;
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#F8FAFC]">
-        <Card className="w-full max-w-md border-none shadow-xl rounded-3xl overflow-hidden">
-          <div className="bg-[#EE4D2D] p-8 flex flex-col items-center gap-4 text-white">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-              <BarChart3 className="w-10 h-10" />
-            </div>
-            <CardTitle className="text-3xl font-black">InstaDash</CardTitle>
-          </div>
-          <CardContent className="p-8 space-y-6">
-            <form onSubmit={handleEmailAuth} className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-gray-400">E-mail</Label>
-                <Input 
-                  type="email" 
-                  placeholder="seu@email.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-xl h-12"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-gray-400">Senha</Label>
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-xl h-12"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full bg-[#EE4D2D] hover:bg-[#D73211] font-bold h-12 rounded-xl">
-                {authMode === "login" ? "Entrar" : "Criar Conta"}
-              </Button>
-            </form>
-
-            <p className="text-center text-sm text-gray-400 font-medium">
-              {authMode === "login" ? "Não tem conta?" : "Já tem conta?"}
-              <button 
-                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
-                className="ml-1 text-[#EE4D2D] font-bold hover:underline"
-              >
-                {authMode === "login" ? "Cadastre-se" : "Faça Login"}
-              </button>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (statsLoading || !user) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 sm:pb-20 font-sans">
