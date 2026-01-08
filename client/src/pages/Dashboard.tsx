@@ -951,66 +951,44 @@ export default function Dashboard() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="rounded-xl border-gray-200 hover:bg-gray-50 h-9 w-9 sm:h-10 sm:w-10 transition-colors">
-                  <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                  <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="w-[95vw] max-w-lg rounded-2xl sm:rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
-                <div className="bg-gradient-to-br from-[#EE4D2D] to-[#D73211] p-6 sm:p-8 text-white">
+                <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 sm:p-8 text-white">
                   <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2 flex items-center gap-2">
-                    <Sparkles className="w-6 h-6" /> Configurações
+                    <BarChart3 className="w-6 h-6" /> Painel de Campanhas
                   </h2>
-                  <p className="text-orange-100 text-sm font-medium opacity-90">Personalize sua experiência e conecte suas contas de anúncio.</p>
+                  <p className="text-indigo-100 text-sm font-medium opacity-90">Acompanhe e gerencie o desempenho das suas campanhas ativas.</p>
                 </div>
                 
                 <div className="p-6 sm:p-8 space-y-6">
                   <div className="space-y-4">
                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                      <Facebook className="w-4 h-4" /> Facebook Ads (Meta)
+                      <PieChart className="w-4 h-4" /> Resumo de Performance
                     </h3>
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="appId" className="text-xs font-bold text-gray-600">App ID do Aplicativo</Label>
-                        <Input 
-                          id="appId" 
-                          placeholder="Ex: 123456789012345" 
-                          className="rounded-xl border-gray-200 h-11"
-                          value={fbConfig.appId}
-                          onChange={(e) => setFbConfig({...fbConfig, appId: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="appSecret" className="text-xs font-bold text-gray-600">App Secret</Label>
-                        <Input 
-                          id="appSecret" 
-                          type="password" 
-                          placeholder="••••••••••••••••" 
-                          className="rounded-xl border-gray-200 h-11"
-                          value={fbConfig.appSecret}
-                          onChange={(e) => setFbConfig({...fbConfig, appSecret: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={handleSaveFbConfig}
-                        className="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold h-11 transition-all"
-                      >
-                        Salvar Chaves
-                      </Button>
-                      <Button 
-                        onClick={handleConnectFb}
-                        disabled={isConnectingFb}
-                        className="flex-1 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold h-11 transition-all shadow-md shadow-blue-100"
-                      >
-                        {isConnectingFb ? "Conectando..." : "Vincular Perfil"}
-                      </Button>
+                    <div className="space-y-3">
+                      {campaignStats?.map((item: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5] }} />
+                            <span className="text-sm font-bold text-gray-700">{item.subId}</span>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-black text-gray-900">{formatCurrency(item.revenue)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {(!campaignStats || campaignStats.length === 0) && (
+                        <p className="text-center py-4 text-xs font-medium text-gray-400 italic">Nenhuma campanha ativa no momento.</p>
+                      )}
                     </div>
                   </div>
 
                   <Button 
                     variant="ghost" 
                     onClick={handleLogout}
-                    className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 font-black h-11 rounded-xl"
+                    className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 font-black h-11 rounded-xl mt-4"
                   >
                     Encerrar Sessão
                   </Button>
