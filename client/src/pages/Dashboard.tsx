@@ -1471,19 +1471,19 @@ export default function Dashboard() {
                 <div className="h-[250px] sm:h-[300px] w-full max-w-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
-                      <Pie
-                        data={campaignStats.map(s => ({ name: s.subId, value: s.revenue }))}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {campaignStats.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5]} />
-                        ))}
-                      </Pie>
+                        <Pie
+                          data={campaignStats.map(s => ({ name: s.subId, value: s.revenue }))}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {campaignStats.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={["#EE4D2D", "#FFB100", "#22C55E", "#3B82F6", "#A855F7"][index % 5]} />
+                          ))}
+                        </Pie>
                       <RechartsTooltip formatter={(value: number) => formatCurrency(value)} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
