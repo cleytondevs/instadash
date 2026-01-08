@@ -322,7 +322,7 @@ export default function Dashboard() {
           const productName = getVal(["Nome do Produto", "Product Name", "Nome", "Descrição do produto", "Product", "Product Name (Optional)"]);
           const rawClicks = getVal(["Cliques gerados pelos links promocionais do afiliado", "Cliques no produto", "Cliques", "Clicks", "Número de cliques", "Visualizações de página", "Product Clicks", "Item Clicks"]);
           
-          if (!orderId || !productName || productName === "Produto") return null;
+          if (!orderId) return null;
 
           let revenueCents = 0;
           if (rawRevenue) {
@@ -330,7 +330,10 @@ export default function Dashboard() {
             revenueCents = Math.floor(parseFloat(cleanRevenue) * 100);
           }
 
-          if (isNaN(revenueCents) || revenueCents <= 0) return null;
+          // Se não tiver nome, ou for o nome genérico "Produto", ou a receita for zero, descartamos
+          if (!productName || String(productName).trim() === "" || String(productName).trim() === "Produto" || revenueCents <= 0) {
+            return null;
+          }
 
           const source = subId ? "social_media" : "shopee_video";
           
