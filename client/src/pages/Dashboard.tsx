@@ -368,35 +368,39 @@ export default function Dashboard() {
         }
 
       // 5. Salva os Sub IDs novos no banco de dados automaticamente
-      const uniqueSubIds = Array.from(new Set(
-        sales
-          .map(s => s.subId)
-          .filter(id => id && id !== "" && id !== "-")
-      ));
+      const syncSubIds = async () => {
+        const uniqueSubIds = Array.from(new Set(
+          sales
+            .map(s => s.subId)
+            .filter(id => id && id !== "" && id !== "-")
+        ));
 
-      if (uniqueSubIds.length > 0) {
-        const { data: existingSheets } = await supabase
-          .from("campaign_sheets")
-          .select("sub_id")
-          .eq("user_id", user.id)
-          .in("sub_id", uniqueSubIds);
-
-        const existingSubIds = new Set(existingSheets?.map(s => s.sub_id) || []);
-        const newSubIds = uniqueSubIds.filter(id => !existingSubIds.has(id));
-
-        if (newSubIds.length > 0) {
-          await supabase
+        if (uniqueSubIds.length > 0) {
+          const { data: existingSheets } = await supabase
             .from("campaign_sheets")
-            .insert(newSubIds.map(id => ({
-              user_id: user.id,
-              sub_id: id
-            })));
-        }
-      }
+            .select("sub_id")
+            .eq("user_id", user.id)
+            .in("sub_id", uniqueSubIds);
 
-      uploadMutation.mutate(sales);
-      setLocalProducts(sales);
-      localStorage.setItem("last_upload_products", JSON.stringify(sales));
+          const existingSubIds = new Set(existingSheets?.map(s => s.sub_id) || []);
+          const newSubIds = uniqueSubIds.filter(id => !existingSubIds.has(id));
+
+          if (newSubIds.length > 0) {
+            await supabase
+              .from("campaign_sheets")
+              .insert(newSubIds.map(id => ({
+                user_id: user.id,
+                sub_id: id
+              })));
+          }
+        }
+      };
+
+      syncSubIds().then(() => {
+        uploadMutation.mutate(sales);
+        setLocalProducts(sales);
+        localStorage.setItem("last_upload_products", JSON.stringify(sales));
+      });
     },
     error: (error) => {
       setIsUploading(false);
@@ -982,7 +986,7 @@ export default function Dashboard() {
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button 
-              variant="link" 
+              variant="ghost" 
               className="text-zinc-500 hover:text-[#EE4D2D] font-bold"
               onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
             >
