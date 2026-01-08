@@ -684,7 +684,6 @@ export default function Dashboard() {
       const { error: expError } = await supabase
         .from("campaign_expenses")
         .insert([{
-          user_id: user.id,
           campaign_sheet_id: campaignSheetId,
           amount: data.amount,
           description: "Gasto Manual",
@@ -793,7 +792,6 @@ export default function Dashboard() {
           .from("campaign_expenses")
           .insert([{
             campaign_sheet_id: sheet.id,
-            user_id: user.id,
             amount: data.expense,
             description: "Gasto Inicial",
             date: new Date().toISOString().split('T')[0]
