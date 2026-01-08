@@ -1,3 +1,4 @@
+import { useLocation } from "wouter";
 import { KPICard } from "@/components/KPICard";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -62,6 +63,7 @@ import Papa from "papaparse";
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [user, setUser] = useState<any>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -942,7 +944,7 @@ export default function Dashboard() {
                       <Button 
                         onClick={() => {
                           if (!newSubId) return;
-                          createCampaignMutation.mutate(newSubId);
+                          createCampaignMutation.mutate({ subId: newSubId, expense: 0 });
                         }}
                         disabled={createCampaignMutation.isPending}
                         className="bg-[#EE4D2D] hover:bg-[#D73211] rounded-xl font-bold"
