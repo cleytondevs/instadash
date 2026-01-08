@@ -341,7 +341,7 @@ export default function Dashboard() {
             productName: productName ? String(productName).trim() : "Produto",
             clicks: parseInt(String(rawClicks || "0"), 10) || 0
           };
-        }).filter(s => s !== null && s.orderId && s.revenue > 0);
+        }).filter(s => s !== null && s.orderId && s.revenue > 0 && s.productName && s.productName !== "Produto");
 
         if (sales.length === 0) {
           setLastError("Não conseguimos identificar os dados de vendas automaticamente. Verifique se o arquivo é o exportado da Shopee.");
