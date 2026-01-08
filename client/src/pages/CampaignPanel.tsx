@@ -1,7 +1,6 @@
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/hooks/use-auth";
 import { 
   BarChart3, 
   ArrowLeft, 
@@ -24,7 +23,6 @@ export default function CampaignPanel() {
   const [, params] = useRoute("/campaign/:subId");
   const subId = decodeURIComponent(params?.subId || "");
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
   const { toast } = useToast();
   const [newExpense, setNewExpense] = useState("");
 
